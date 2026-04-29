@@ -2,12 +2,11 @@
 import sqlite3
 
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.prebuilt import create_react_agent
 
-from app.config import settings
 from app.agent.prompts import SYSTEM_PROMPT
-
+from app.config import settings
 
 _agent = None
 

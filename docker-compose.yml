@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cloudguard-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # .env dosyasından okuma
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY:-}
+      - VIRUSTOTAL_API_KEY=${VIRUSTOTAL_API_KEY:-}
+      - APP_ENV=production
+      - DATABASE_URL=sqlite:////app/data/cloudguard.db
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+    volumes:
+      # DB dosyaları container yeniden başlasa da kalsın
+      - ./backend/data:/app/data
+    restart: unless-stopped
+
+  # Frontend Hafta 2'de eklenecek
+  # frontend:
+  #   build: ./frontend
+  #   ports:
+  #     - "5173:5173"
+  #   depends_on:
+  #     - backend

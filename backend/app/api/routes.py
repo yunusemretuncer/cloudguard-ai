@@ -5,14 +5,13 @@ from sqlalchemy.orm import Session
 
 from app.agent.core import chat as agent_chat
 from app.api.schemas import (
-    ChatRequest,
-    ChatResponse,
     ChatHistoryItem,
     ChatHistoryResponse,
+    ChatRequest,
+    ChatResponse,
 )
 from app.db.database import get_db
 from app.db.models import ChatMessage
-
 
 router = APIRouter()
 

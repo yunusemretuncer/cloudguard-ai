@@ -4,7 +4,6 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.config import settings
 
-
 # SQLite için özel arg: same thread kontrolünü kapat (FastAPI thread pool için gerekli)
 connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
 

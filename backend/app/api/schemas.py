@@ -1,7 +1,7 @@
 """Pydantic request/response modelleri."""
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ChatRequest(BaseModel):
@@ -21,8 +21,7 @@ class ChatHistoryItem(BaseModel):
     agent_reply: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True   # SQLAlchemy modelinden direkt dönüştürmeye izin verir
+    model_config = {"from_attributes": True}
 
 
 class ChatHistoryResponse(BaseModel):

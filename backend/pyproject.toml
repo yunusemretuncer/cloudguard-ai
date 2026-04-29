@@ -1,0 +1,38 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+    ".venv",
+    "venv",
+    "__pycache__",
+    "data",
+]
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI'nin DI fonksiyonları default argument'ta çağrılır — bu doğru kullanım
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "fastapi.Body",
+    "fastapi.Path",
+    "fastapi.Header",
+    "fastapi.Cookie",
+    "fastapi.Form",
+    "fastapi.File",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes (kullanılmayan import vs)
+    "I",   # isort (import sıralaması)
+    "B",   # flake8-bugbear (yaygın bug pattern'ler)
+]
+ignore = [
+    "E501",  # line too long — formatter halleder
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+asyncio_mode = "auto"
