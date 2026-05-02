@@ -1,5 +1,5 @@
 """
-test_tools.py — pytest test suite for log_analyzer's three @tool functions...
+test_tools.py — pytest test suite for log_analyzer's three @tool functions.
 
 Test categories:
   1. Helper functions (_is_internal, _parse_iso, _ct_user_of)
@@ -22,14 +22,25 @@ from pathlib import Path
 
 import pytest
 
-# Make log_analyzer importable. In real project this is handled by
-# pytest discovery from project root; locally we add the path explicitly.
-sys.path.insert(0, str(Path(__file__).parent))
+# --- Path & data-directory setup --------------------------------------------
+# This test file lives at backend/tests/test_tools.py.
+# log_analyzer.py lives at backend/app/agent/tools/log_analyzer.py.
+# Sample data lives at backend/data/sample_logs/.
+#
+# Resolve both relative to this file so the suite works regardless of
+# where pytest is invoked from (CI runs from backend/, locally we may
+# run from the repo root or the tests/ dir).
 
-# Point log_analyzer at our sample data BEFORE importing it.
+_THIS_DIR    = Path(__file__).resolve().parent          # .../backend/tests
+_BACKEND_DIR = _THIS_DIR.parent                          # .../backend
+_TOOLS_DIR   = _BACKEND_DIR / "app" / "agent" / "tools"  # .../backend/app/agent/tools
+_DATA_DIR    = _BACKEND_DIR / "data" / "sample_logs"     # .../backend/data/sample_logs
+
+sys.path.insert(0, str(_TOOLS_DIR))
+
+# Point log_analyzer at our real sample data BEFORE importing it.
 # The module reads CLOUDGUARD_DATA_DIR at import time.
-_TEST_DATA_DIR = Path(__file__).parent
-os.environ["CLOUDGUARD_DATA_DIR"] = str(_TEST_DATA_DIR)
+os.environ["CLOUDGUARD_DATA_DIR"] = str(_DATA_DIR)
 
 import log_analyzer  # noqa: E402
 from log_analyzer import (  # noqa: E402
@@ -145,9 +156,8 @@ class TestCloudTrail:
 
     def test_privesc_count_seven(self, report):
         # 5 attack events + 2 legitimate (false positives) = 7 PRIVILEGE_ESCALATION
-        count = report.count("PRIVILEGE_ESCALATION:")
-        # Each finding has the type appear in section header AND as detail string
-        # Counting "Finding #N: PRIVILEGE_ESCALATION" is more precise:
+        # Counting "Finding #N: PRIVILEGE_ESCALATION" matches each finding
+        # exactly once (the type appears in section headers).
         finding_count = len(re.findall(r"Finding #\d+: PRIVILEGE_ESCALATION", report))
         assert finding_count == 7, f"Expected 7 privesc findings, got {finding_count}"
 
@@ -419,6 +429,3 @@ class TestMITREMapping:
         auth = call(analyze_auth_logs)
         assert "MITRE ATT&CK:" in auth
         assert "T1078" in auth  # valid accounts (compromise)
-
-
-        
