@@ -1,5 +1,5 @@
 """
-log_analyzer.py — Three security analysis tools for the CloudGuard AI agent..
+log_analyzer.py — Three security analysis tools for the CloudGuard AI agent.
 
 This module exposes three @tool functions, one per log source:
 
@@ -482,18 +482,18 @@ def analyze_auth_logs(query: str = "all") -> str:
     findings: List[Dict] = []
 
     # --- Detection 1: SSH brute force ----------------------------------------
-    sshd_failed = [l for l in logs
-                   if l.get("service") == "sshd" and not l.get("success", True)]
+    sshd_failed = [entry for entry in logs
+                   if entry.get("service") == "sshd" and not entry.get("success", True)]
     by_ip = defaultdict(list)
-    for l in sshd_failed:
-        if l.get("source_ip"):
-            by_ip[l["source_ip"]].append(l)
+    for entry in sshd_failed:
+        if entry.get("source_ip"):
+            by_ip[entry["source_ip"]].append(entry)
     for ip, attempts in by_ip.items():
         if len(attempts) >= AUTH_BRUTE_THRESHOLD_MEDIUM:
             sev = "HIGH" if len(attempts) >= AUTH_BRUTE_THRESHOLD_HIGH else "MEDIUM"
-            users = sorted({l["user"] for l in attempts})
-            hosts = sorted({l["hostname"] for l in attempts})
-            times = sorted(l["timestamp"] for l in attempts)
+            users = sorted({entry["user"] for entry in attempts})
+            hosts = sorted({entry["hostname"] for entry in attempts})
+            times = sorted(entry["timestamp"] for entry in attempts)
             findings.append({
                 "type": "SSH_BRUTE_FORCE",
                 "severity": sev,
@@ -508,13 +508,13 @@ def analyze_auth_logs(query: str = "all") -> str:
             })
 
     # --- Detection 2: SSH compromise (failure→success) -----------------------
-    sshd_all = [l for l in logs if l.get("service") == "sshd"]
+    sshd_all = [entry for entry in logs if entry.get("service") == "sshd"]
     for ip, fails in by_ip.items():
-        successes = [l for l in sshd_all
-                     if l.get("source_ip") == ip and l.get("success")]
+        successes = [entry for entry in sshd_all
+                     if entry.get("source_ip") == ip and entry.get("success")]
         if not successes:
             continue
-        last_fail_t = max(_parse_iso(l["timestamp"]) for l in fails)
+        last_fail_t = max(_parse_iso(entry["timestamp"]) for entry in fails)
         for s in successes:
             delta = (_parse_iso(s["timestamp"]) - last_fail_t).total_seconds()
             if 0 <= delta <= AUTH_COMPROMISE_WINDOW_SEC:
@@ -534,15 +534,15 @@ def analyze_auth_logs(query: str = "all") -> str:
                 break  # one finding per IP suffices
 
     # --- Detection 3: Sudo escalation attempts -------------------------------
-    sudo_failed = [l for l in logs
-                   if l.get("service") == "sudo" and not l.get("success", True)]
+    sudo_failed = [entry for entry in logs
+                   if entry.get("service") == "sudo" and not entry.get("success", True)]
     by_user = defaultdict(list)
-    for l in sudo_failed:
-        by_user[l["user"]].append(l)
+    for entry in sudo_failed:
+        by_user[entry["user"]].append(entry)
     for user, attempts in by_user.items():
         if len(attempts) >= AUTH_SUDO_FAILURE_THRESHOLD:
-            cmds = sorted({l.get("command", "?") for l in attempts})
-            hosts = sorted({l["hostname"] for l in attempts})
+            cmds = sorted({entry.get("command", "?") for entry in attempts})
+            hosts = sorted({entry["hostname"] for entry in attempts})
             findings.append({
                 "type": "SUDO_ESCALATION_ATTEMPTS",
                 "severity": "HIGH",
