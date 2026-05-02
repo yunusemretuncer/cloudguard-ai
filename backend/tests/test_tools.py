@@ -1,5 +1,5 @@
 """
-test_tools.py — pytest test suite for log_analyzer's three @tool functions.
+test_tools.py — pytest test suite for log_analyzer's three @tool functions...
 
 Test categories:
   1. Helper functions (_is_internal, _parse_iso, _ct_user_of)

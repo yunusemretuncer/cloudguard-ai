@@ -113,12 +113,40 @@ def _validate_ip(ip: str) -> bool:
         return False
 
 
+# RFC 1918 private + RFC 6598 (CGN). Used to distinguish internal hosts.
+# We deliberately use prefix matching rather than ipaddress.is_private,
+# because is_private also flags RFC 5737 documentation ranges
+# (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24) as private — which is
+# correct per RFC 6890 but wrong for our purpose: those ranges represent
+# external attackers in our sample data and must be treated as public.
+INTERNAL_PREFIXES = (
+    "10.",
+    "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.",
+    "172.22.", "172.23.", "172.24.", "172.25.", "172.26.", "172.27.",
+    "172.28.", "172.29.", "172.30.", "172.31.",
+    "192.168.",
+    "100.64.", "100.65.", "100.66.", "100.67.", "100.68.", "100.69.",
+    "100.70.", "100.71.", "100.72.", "100.73.", "100.74.", "100.75.",
+    "100.76.", "100.77.", "100.78.", "100.79.", "100.80.", "100.81.",
+    "100.82.", "100.83.", "100.84.", "100.85.", "100.86.", "100.87.",
+    "100.88.", "100.89.", "100.90.", "100.91.", "100.92.", "100.93.",
+    "100.94.", "100.95.", "100.96.", "100.97.", "100.98.", "100.99.",
+    "100.100.", "100.101.", "100.102.", "100.103.", "100.104.",
+    "100.105.", "100.106.", "100.107.", "100.108.", "100.109.",
+    "100.110.", "100.111.", "100.112.", "100.113.", "100.114.",
+    "100.115.", "100.116.", "100.117.", "100.118.", "100.119.",
+    "100.120.", "100.121.", "100.122.", "100.123.", "100.124.",
+    "100.125.", "100.126.", "100.127.",
+)
+
+
 def _is_internal(ip: str) -> bool:
-    """True if `ip` is an RFC 1918 / 6598 / link-local private address."""
-    try:
-        return ipaddress.ip_address(ip).is_private
-    except (ValueError, TypeError):
-        return False
+    """True if `ip` is in an RFC 1918 / 6598 private range.
+
+    Uses prefix matching rather than ipaddress.is_private (see
+    INTERNAL_PREFIXES comment for rationale).
+    """
+    return ip.startswith(INTERNAL_PREFIXES)
 
 
 # ============================================================================
@@ -239,12 +267,18 @@ def _format_section_abuseipdb(abuse: Dict[str, Any]) -> str:
     out = "### AbuseIPDB\n"
     out += f"- **Abuse score:** {abuse['score']}/100\n"
     out += f"- **Total reports:** {abuse['total_reports']}\n"
-    if abuse.get("country"):     out += f"- **Country:** {abuse['country']}\n"
-    if abuse.get("isp"):         out += f"- **ISP:** {abuse['isp']}\n"
-    if abuse.get("usage_type"):  out += f"- **Usage type:** {abuse['usage_type']}\n"
-    if abuse.get("last_reported"): out += f"- **Last reported:** {abuse['last_reported']}\n"
-    if abuse.get("is_tor"):      out += "- **TOR exit node:** ⚠️ Yes\n"
-    if abuse.get("is_whitelisted"): out += "- **Whitelisted:** ✅ Yes\n"
+    if abuse.get("country"):
+        out += f"- **Country:** {abuse['country']}\n"
+    if abuse.get("isp"):
+        out += f"- **ISP:** {abuse['isp']}\n"
+    if abuse.get("usage_type"):
+        out += f"- **Usage type:** {abuse['usage_type']}\n"
+    if abuse.get("last_reported"):
+        out += f"- **Last reported:** {abuse['last_reported']}\n"
+    if abuse.get("is_tor"):
+        out += "- **TOR exit node:** ⚠️ Yes\n"
+    if abuse.get("is_whitelisted"):
+        out += "- **Whitelisted:** ✅ Yes\n"
     return out
 
 
@@ -255,8 +289,10 @@ def _format_section_virustotal(vt: Dict[str, Any]) -> str:
     out += f"- **Malicious vendors:** {vt['malicious']}\n"
     out += f"- **Suspicious vendors:** {vt['suspicious']}\n"
     out += f"- **Harmless vendors:** {vt['harmless']}\n"
-    if vt.get("as_owner"):    out += f"- **AS owner:** {vt['as_owner']}\n"
-    if vt.get("country"):     out += f"- **Country:** {vt['country']}\n"
+    if vt.get("as_owner"):
+        out += f"- **AS owner:** {vt['as_owner']}\n"
+    if vt.get("country"):
+        out += f"- **Country:** {vt['country']}\n"
     if vt.get("reputation") is not None:
         out += f"- **Reputation:** {vt['reputation']}\n"
     return out
@@ -295,20 +331,20 @@ def _format_demo_report(ip: str) -> str:
 
     if _is_internal(ip):
         return header + (
-            f"ℹ️ **Internal IP** (RFC 1918 / 6598 private range)\n"
-            f"- Private addresses are not routable on the public internet, so "
-            f"they have no external threat-intel data.\n"
-            f"- Reputation lookups should be performed against the *external* "
-            f"endpoints this IP communicates with."
+            "ℹ️ **Internal IP** (RFC 1918 / 6598 private range)\n"
+            "- Private addresses are not routable on the public internet, so "
+            "they have no external threat-intel data.\n"
+            "- Reputation lookups should be performed against the *external* "
+            "endpoints this IP communicates with."
         )
 
     if ip.startswith(DEMO_KNOWN_GOOD_PREFIXES):
         return header + (
-            f"✅ **Threat level:** LOW — recognized internal benchmark range\n\n"
-            f"This IP is in the RFC 2544 benchmark range (198.18.0.0/15) used "
-            f"in our sample data as the office/trusted egress range. In a "
-            f"production environment, this would be your corporate VPN or "
-            f"office network. No threat indicators."
+            "✅ **Threat level:** LOW — recognized internal benchmark range\n\n"
+            "This IP is in the RFC 2544 benchmark range (198.18.0.0/15) used "
+            "in our sample data as the office/trusted egress range. In a "
+            "production environment, this would be your corporate VPN or "
+            "office network. No threat indicators."
         )
 
     if ip in DEMO_KNOWN_BAD:
@@ -322,10 +358,10 @@ def _format_demo_report(ip: str) -> str:
         )
 
     return header + (
-        f"❓ **Threat level:** UNKNOWN — no data without API keys\n\n"
-        f"This is a public IP address but it is not in our local lookup table. "
-        f"To assess its reputation, configure `ABUSEIPDB_API_KEY` and "
-        f"`VIRUSTOTAL_API_KEY` in `.env`."
+        "❓ **Threat level:** UNKNOWN — no data without API keys\n\n"
+        "This is a public IP address but it is not in our local lookup table. "
+        "To assess its reputation, configure `ABUSEIPDB_API_KEY` and "
+        "`VIRUSTOTAL_API_KEY` in `.env`."
     )
 
 

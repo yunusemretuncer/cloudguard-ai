@@ -1,5 +1,5 @@
 """
-log_analyzer.py — Three security analysis tools for the CloudGuard AI agent.
+log_analyzer.py — Three security analysis tools for the CloudGuard AI agent..
 
 This module exposes three @tool functions, one per log source:
 
