@@ -434,4 +434,3 @@ if __name__ == "__main__":
         print(check_ip_reputation.invoke({"ip_address": ip})
               if hasattr(check_ip_reputation, "invoke")
               else check_ip_reputation(ip))
-        
