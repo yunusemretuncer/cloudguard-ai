@@ -419,3 +419,6 @@ class TestMITREMapping:
         auth = call(analyze_auth_logs)
         assert "MITRE ATT&CK:" in auth
         assert "T1078" in auth  # valid accounts (compromise)
+
+
+        
