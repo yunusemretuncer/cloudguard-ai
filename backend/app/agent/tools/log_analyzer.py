@@ -575,4 +575,3 @@ if __name__ == "__main__":
         print()
     if choice in ("auth", "all"):
         print(analyze_auth_logs("all"))
-      
