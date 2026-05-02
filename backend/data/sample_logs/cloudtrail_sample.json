@@ -1,0 +1,1247 @@
+{
+  "Records": [
+    {
+      "eventVersion": "1.09",
+      "eventID": "f9ef0cfc-378b-439c-a182-cccceca42570",
+      "eventTime": "2026-04-21T08:30:00Z",
+      "eventName": "ConsoleLogin",
+      "eventSource": "signin.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.10",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDASENIORADMINEX",
+        "arn": "arn:aws:iam::123456789012:user/senior-admin",
+        "accountId": "123456789012",
+        "userName": "senior-admin"
+      },
+      "requestParameters": {},
+      "responseElements": {
+        "ConsoleLogin": "Success"
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "4289fe1a-f469-444e-8b4b-7ceea2c0a8d9",
+      "eventTime": "2026-04-21T08:45:00Z",
+      "eventName": "ConsoleLogin",
+      "eventSource": "signin.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.50",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {},
+      "responseElements": {
+        "ConsoleLogin": "Success"
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal_dev_user_baseline"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "9d4c8fad-c3f7-4848-b47f-1cc788d483b8",
+      "eventTime": "2026-04-21T08:55:00Z",
+      "eventName": "ConsoleLogin",
+      "eventSource": "signin.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.15",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAOPSENGINEEREX",
+        "arn": "arn:aws:iam::123456789012:user/ops-engineer",
+        "accountId": "123456789012",
+        "userName": "ops-engineer"
+      },
+      "requestParameters": {},
+      "responseElements": {
+        "ConsoleLogin": "Success"
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "0faefc62-3734-42ab-88e2-74557e4f723a",
+      "eventTime": "2026-04-21T09:00:00Z",
+      "eventName": "ConsoleLogin",
+      "eventSource": "signin.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.22",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADATAANALYSTEX",
+        "arn": "arn:aws:iam::123456789012:user/data-analyst",
+        "accountId": "123456789012",
+        "userName": "data-analyst"
+      },
+      "requestParameters": {},
+      "responseElements": {
+        "ConsoleLogin": "Success"
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "d7c2bb7c-1fa9-4b0b-8617-2ce6a9b801d0",
+      "eventTime": "2026-04-21T09:15:00Z",
+      "eventName": "ListBuckets",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.22",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADATAANALYSTEX",
+        "arn": "arn:aws:iam::123456789012:user/data-analyst",
+        "accountId": "123456789012",
+        "userName": "data-analyst"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "f6043401-35b2-49e7-b910-2c1bfcc27c89",
+      "eventTime": "2026-04-21T09:30:00Z",
+      "eventName": "DescribeInstances",
+      "eventSource": "ec2.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.50",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal_dev_user_baseline"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "cd4039f1-2ac8-450f-ae08-5aad6d2669d0",
+      "eventTime": "2026-04-21T10:00:00Z",
+      "eventName": "AssumeRole",
+      "eventSource": "sts.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.30",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "AssumedRole",
+        "principalId": "AROACIPIPELINEBOT:session-1",
+        "arn": "arn:aws:sts::123456789012:assumed-role/ci-pipeline-bot/session-1",
+        "accountId": "123456789012",
+        "sessionContext": {
+          "sessionIssuer": {
+            "type": "Role",
+            "userName": "ci-pipeline-bot",
+            "arn": "arn:aws:iam::123456789012:role/ci-pipeline-bot"
+          }
+        }
+      },
+      "requestParameters": {
+        "roleArn": "arn:aws:iam::123456789012:role/deploy-role",
+        "roleSessionName": "ci-build-1234"
+      },
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "7f2aa0d6-cc81-434b-b351-6d513bd26987",
+      "eventTime": "2026-04-21T10:30:00Z",
+      "eventName": "AttachUserPolicy",
+      "eventSource": "iam.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.10",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDASENIORADMINEX",
+        "arn": "arn:aws:iam::123456789012:user/senior-admin",
+        "accountId": "123456789012",
+        "userName": "senior-admin"
+      },
+      "requestParameters": {
+        "userName": "new-employee-jane",
+        "policyArn": "arn:aws:iam::aws:policy/ReadOnlyAccess"
+      },
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S2_LEGITIMATE_onboarding"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "fea2aad2-7155-48d1-b613-ac574bb26cf1",
+      "eventTime": "2026-04-21T10:32:00Z",
+      "eventName": "CreateAccessKey",
+      "eventSource": "iam.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.10",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDASENIORADMINEX",
+        "arn": "arn:aws:iam::123456789012:user/senior-admin",
+        "accountId": "123456789012",
+        "userName": "senior-admin"
+      },
+      "requestParameters": {
+        "userName": "new-employee-jane"
+      },
+      "responseElements": {
+        "accessKey": {
+          "accessKeyId": "AKIAEXAMPLEEMPL2026",
+          "status": "Active",
+          "userName": "new-employee-jane"
+        }
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S2_LEGITIMATE_onboarding"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "9ded1cbe-b8f6-415c-b7f6-ab0c9747ffa5",
+      "eventTime": "2026-04-21T10:45:00Z",
+      "eventName": "DescribeSecurityGroups",
+      "eventSource": "ec2.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.15",
+      "userAgent": "APN/1.0 HashiCorp/1.0 Terraform/1.5.7",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAOPSENGINEEREX",
+        "arn": "arn:aws:iam::123456789012:user/ops-engineer",
+        "accountId": "123456789012",
+        "userName": "ops-engineer"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "7b351803-bf10-484f-ac9f-2117e8b5d7bb",
+      "eventTime": "2026-04-21T11:30:00Z",
+      "eventName": "GetObject",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.10",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDASENIORADMINEX",
+        "arn": "arn:aws:iam::123456789012:user/senior-admin",
+        "accountId": "123456789012",
+        "userName": "senior-admin"
+      },
+      "requestParameters": {
+        "bucketName": "app-config",
+        "key": "production.yaml"
+      },
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "f084ec0f-8ee3-47c0-a121-1891bf60d8c4",
+      "eventTime": "2026-04-21T12:00:00Z",
+      "eventName": "GetCallerIdentity",
+      "eventSource": "sts.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.77",
+      "userAgent": "Boto3/1.28.85 md/Botocore#1.31.85",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAAWSDEPLOYBOTEX",
+        "arn": "arn:aws:iam::123456789012:user/aws-deploy-bot",
+        "accountId": "123456789012",
+        "userName": "aws-deploy-bot"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S4_probing_recon"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "6268465a-ccbb-46a9-b662-30bbf3d29a70",
+      "eventTime": "2026-04-21T12:00:05Z",
+      "eventName": "ListBuckets",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.77",
+      "userAgent": "Boto3/1.28.85 md/Botocore#1.31.85",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAAWSDEPLOYBOTEX",
+        "arn": "arn:aws:iam::123456789012:user/aws-deploy-bot",
+        "accountId": "123456789012",
+        "userName": "aws-deploy-bot"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S4_probing_recon"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "527c6963-d37a-44fb-aacd-d54dba15eff7",
+      "eventTime": "2026-04-21T12:00:12Z",
+      "eventName": "ListUsers",
+      "eventSource": "iam.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.77",
+      "userAgent": "Boto3/1.28.85 md/Botocore#1.31.85",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAAWSDEPLOYBOTEX",
+        "arn": "arn:aws:iam::123456789012:user/aws-deploy-bot",
+        "accountId": "123456789012",
+        "userName": "aws-deploy-bot"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "errorCode": "AccessDenied",
+      "errorMessage": "User: arn:aws:iam::123456789012:user/aws-deploy-bot is not authorized to perform: ListUsers (Status Code: 403; Error Code: UnauthorizedOperation)",
+      "_scenario": "S4_probing_UNAUTHORIZED"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "6e6dacb7-9f2f-4d64-ab84-e8b066ac8d60",
+      "eventTime": "2026-04-21T12:00:18Z",
+      "eventName": "ListRoles",
+      "eventSource": "iam.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.77",
+      "userAgent": "Boto3/1.28.85 md/Botocore#1.31.85",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAAWSDEPLOYBOTEX",
+        "arn": "arn:aws:iam::123456789012:user/aws-deploy-bot",
+        "accountId": "123456789012",
+        "userName": "aws-deploy-bot"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "errorCode": "AccessDenied",
+      "errorMessage": "User: arn:aws:iam::123456789012:user/aws-deploy-bot is not authorized to perform: ListRoles (Status Code: 403; Error Code: UnauthorizedOperation)",
+      "_scenario": "S4_probing_UNAUTHORIZED"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "ee3d0107-46bc-4292-8b47-3d984ca20e45",
+      "eventTime": "2026-04-21T12:00:25Z",
+      "eventName": "DescribeInstances",
+      "eventSource": "ec2.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.77",
+      "userAgent": "Boto3/1.28.85 md/Botocore#1.31.85",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAAWSDEPLOYBOTEX",
+        "arn": "arn:aws:iam::123456789012:user/aws-deploy-bot",
+        "accountId": "123456789012",
+        "userName": "aws-deploy-bot"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S4_probing_recon"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "d91cf139-ca69-41b7-abbf-6bb4758fb98f",
+      "eventTime": "2026-04-21T12:00:35Z",
+      "eventName": "RunInstances",
+      "eventSource": "ec2.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.77",
+      "userAgent": "Boto3/1.28.85 md/Botocore#1.31.85",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAAWSDEPLOYBOTEX",
+        "arn": "arn:aws:iam::123456789012:user/aws-deploy-bot",
+        "accountId": "123456789012",
+        "userName": "aws-deploy-bot"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "errorCode": "AccessDenied",
+      "errorMessage": "User: arn:aws:iam::123456789012:user/aws-deploy-bot is not authorized to perform: RunInstances (Status Code: 403; Error Code: UnauthorizedOperation)",
+      "_scenario": "S4_probing_UNAUTHORIZED"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "3aaecfa6-5dbd-4547-89a3-082af14fe130",
+      "eventTime": "2026-04-21T12:00:45Z",
+      "eventName": "CreateUser",
+      "eventSource": "iam.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.77",
+      "userAgent": "Boto3/1.28.85 md/Botocore#1.31.85",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAAWSDEPLOYBOTEX",
+        "arn": "arn:aws:iam::123456789012:user/aws-deploy-bot",
+        "accountId": "123456789012",
+        "userName": "aws-deploy-bot"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "errorCode": "AccessDenied",
+      "errorMessage": "User: arn:aws:iam::123456789012:user/aws-deploy-bot is not authorized to perform: CreateUser (Status Code: 403; Error Code: UnauthorizedOperation)",
+      "_scenario": "S4_probing_UNAUTHORIZED"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "3927617f-d7b4-42da-9312-f18c794fee77",
+      "eventTime": "2026-04-21T13:00:00Z",
+      "eventName": "PutObject",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.30",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "AssumedRole",
+        "principalId": "AROACIPIPELINEBOT:session-1",
+        "arn": "arn:aws:sts::123456789012:assumed-role/ci-pipeline-bot/session-1",
+        "accountId": "123456789012",
+        "sessionContext": {
+          "sessionIssuer": {
+            "type": "Role",
+            "userName": "ci-pipeline-bot",
+            "arn": "arn:aws:iam::123456789012:role/ci-pipeline-bot"
+          }
+        }
+      },
+      "requestParameters": {
+        "bucketName": "deployment-logs",
+        "key": "build-1234.log"
+      },
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "6c3ea615-5857-433c-a776-a0c1a7230b3e",
+      "eventTime": "2026-04-21T13:30:00Z",
+      "eventName": "PutObject",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.30",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "AssumedRole",
+        "principalId": "AROACIPIPELINEBOT:session-1",
+        "arn": "arn:aws:sts::123456789012:assumed-role/ci-pipeline-bot/session-1",
+        "accountId": "123456789012",
+        "sessionContext": {
+          "sessionIssuer": {
+            "type": "Role",
+            "userName": "ci-pipeline-bot",
+            "arn": "arn:aws:iam::123456789012:role/ci-pipeline-bot"
+          }
+        }
+      },
+      "requestParameters": {
+        "bucketName": "deployment-logs",
+        "key": "build-1235.log"
+      },
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "e34b188f-3115-4ca8-9045-7a2136ad2ed1",
+      "eventTime": "2026-04-21T13:45:00Z",
+      "eventName": "ListObjects",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.22",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADATAANALYSTEX",
+        "arn": "arn:aws:iam::123456789012:user/data-analyst",
+        "accountId": "123456789012",
+        "userName": "data-analyst"
+      },
+      "requestParameters": {
+        "bucketName": "reports-quarterly"
+      },
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "1046bab4-0f0f-4e21-b102-8e031dd0d594",
+      "eventTime": "2026-04-21T14:00:00Z",
+      "eventName": "DescribeVpcs",
+      "eventSource": "ec2.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.15",
+      "userAgent": "APN/1.0 HashiCorp/1.0 Terraform/1.5.7",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAOPSENGINEEREX",
+        "arn": "arn:aws:iam::123456789012:user/ops-engineer",
+        "accountId": "123456789012",
+        "userName": "ops-engineer"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "e275f5bd-2b03-48d2-9dec-3789e7177d1b",
+      "eventTime": "2026-04-21T14:30:00Z",
+      "eventName": "ConsoleLogin",
+      "eventSource": "signin.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAADMINUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/admin-user",
+        "accountId": "123456789012",
+        "userName": "admin-user"
+      },
+      "requestParameters": {},
+      "responseElements": {
+        "ConsoleLogin": "Failure"
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "errorCode": "AccessDenied",
+      "errorMessage": "Failed authentication",
+      "_scenario": "S1_brute_force"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "11a3eecc-a8e2-4a29-915d-fb83e62cd238",
+      "eventTime": "2026-04-21T14:30:45Z",
+      "eventName": "ConsoleLogin",
+      "eventSource": "signin.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {},
+      "responseElements": {
+        "ConsoleLogin": "Failure"
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "errorCode": "AccessDenied",
+      "errorMessage": "Failed authentication",
+      "_scenario": "S1_brute_force"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "09e0861a-2a3b-4cb6-8d73-3a9aae57cd00",
+      "eventTime": "2026-04-21T14:31:15Z",
+      "eventName": "ConsoleLogin",
+      "eventSource": "signin.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDABACKUPUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/backup-user",
+        "accountId": "123456789012",
+        "userName": "backup-user"
+      },
+      "requestParameters": {},
+      "responseElements": {
+        "ConsoleLogin": "Failure"
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "errorCode": "AccessDenied",
+      "errorMessage": "Failed authentication",
+      "_scenario": "S1_brute_force"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "d37f2587-0da4-4cfc-b428-54b1f969d386",
+      "eventTime": "2026-04-21T14:32:00Z",
+      "eventName": "ConsoleLogin",
+      "eventSource": "signin.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAADMINUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/admin-user",
+        "accountId": "123456789012",
+        "userName": "admin-user"
+      },
+      "requestParameters": {},
+      "responseElements": {
+        "ConsoleLogin": "Failure"
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "errorCode": "AccessDenied",
+      "errorMessage": "Failed authentication",
+      "_scenario": "S1_brute_force"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "74375095-8039-429d-971d-5a6aa190601f",
+      "eventTime": "2026-04-21T14:32:40Z",
+      "eventName": "ConsoleLogin",
+      "eventSource": "signin.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {},
+      "responseElements": {
+        "ConsoleLogin": "Failure"
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "errorCode": "AccessDenied",
+      "errorMessage": "Failed authentication",
+      "_scenario": "S1_brute_force"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "4873a2fc-1b7a-4764-840f-ab8b953f4c34",
+      "eventTime": "2026-04-21T14:33:20Z",
+      "eventName": "ConsoleLogin",
+      "eventSource": "signin.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDABACKUPUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/backup-user",
+        "accountId": "123456789012",
+        "userName": "backup-user"
+      },
+      "requestParameters": {},
+      "responseElements": {
+        "ConsoleLogin": "Failure"
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "errorCode": "AccessDenied",
+      "errorMessage": "Failed authentication",
+      "_scenario": "S1_brute_force"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "d6641fb4-673c-4e46-9ecd-f2abdb08cbca",
+      "eventTime": "2026-04-21T14:34:05Z",
+      "eventName": "ConsoleLogin",
+      "eventSource": "signin.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {},
+      "responseElements": {
+        "ConsoleLogin": "Success"
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S1_brute_force_SUCCESS"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "2fd7fee0-f0c9-4736-8d98-9493b277329b",
+      "eventTime": "2026-04-21T14:35:05Z",
+      "eventName": "CreateAccessKey",
+      "eventSource": "iam.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "userName": "dev-user"
+      },
+      "responseElements": {
+        "accessKey": {
+          "accessKeyId": "AKIAIOSFODNN7EXAMPLE",
+          "status": "Active",
+          "userName": "dev-user",
+          "createDate": "2026-04-21T14:35:05Z"
+        }
+      },
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S2_privesc_persistence"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "eb67a82c-7363-4e6b-a7e5-b13d24ae8cbf",
+      "eventTime": "2026-04-21T14:35:35Z",
+      "eventName": "AttachUserPolicy",
+      "eventSource": "iam.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "userName": "dev-user",
+        "policyArn": "arn:aws:iam::aws:policy/AdministratorAccess"
+      },
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S2_privesc_PRIMARY"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "2b1070d7-4284-4f2a-8ab1-47b573b2c54a",
+      "eventTime": "2026-04-21T14:36:00Z",
+      "eventName": "CreateRole",
+      "eventSource": "iam.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "roleName": "backup-admin-role",
+        "description": "Backup admin role for emergency access"
+      },
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S2_privesc_backdoor_setup"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "2e5981f2-51b3-450a-bba2-ed98c1f8582c",
+      "eventTime": "2026-04-21T14:36:15Z",
+      "eventName": "UpdateAssumeRolePolicy",
+      "eventSource": "iam.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "roleName": "backup-admin-role",
+        "policyDocument": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:user/dev-user\"},\"Action\":\"sts:AssumeRole\"}]}"
+      },
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S2_privesc_BACKDOOR"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "0fd3f690-3f81-4ece-872d-cafb392a04df",
+      "eventTime": "2026-04-21T14:36:50Z",
+      "eventName": "PutUserPolicy",
+      "eventSource": "iam.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "userName": "dev-user",
+        "policyName": "inline-s3-full-access",
+        "policyDocument": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"*\"}]}"
+      },
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S2_privesc_redundant_access"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "bbb85e55-5c9b-4e6f-988b-8f4e7e0865de",
+      "eventTime": "2026-04-21T14:37:30Z",
+      "eventName": "GetBucketAcl",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "bucketName": "prod-customer-data"
+      },
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S3_exfil_recon"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "d5e1f7b9-5725-4425-8aa2-9a227ddc6049",
+      "eventTime": "2026-04-21T14:37:45Z",
+      "eventName": "GetBucketPolicy",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "bucketName": "prod-customer-data"
+      },
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S3_exfil_recon"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "0ebf7fd2-7977-4d39-bd55-46e9a534f2e9",
+      "eventTime": "2026-04-21T14:38:00Z",
+      "eventName": "PutBucketPolicy",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "bucketName": "prod-customer-data",
+        "bucketPolicy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"s3:GetObject\",\"Resource\":\"arn:aws:s3:::prod-customer-data/*\"}]}"
+      },
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S3_exfil_PUBLIC_BUCKET"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "67ac00b7-d776-4af6-9a82-fac4abd1cc73",
+      "eventTime": "2026-04-21T14:38:15Z",
+      "eventName": "ListObjects",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "bucketName": "prod-customer-data"
+      },
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S3_exfil_enumerate"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "82a9a0be-4194-46e3-90ab-87916e651ab3",
+      "eventTime": "2026-04-21T14:38:30Z",
+      "eventName": "GetObject",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "bucketName": "prod-customer-data",
+        "key": "customers-2025-q1.csv"
+      },
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S3_exfil_DOWNLOAD"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "de7b75f3-6994-4761-9d01-9b0a3ce50b51",
+      "eventTime": "2026-04-21T14:38:35Z",
+      "eventName": "GetObject",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "bucketName": "prod-customer-data",
+        "key": "pii-export-march.json"
+      },
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S3_exfil_DOWNLOAD"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "e310abbd-c3ab-4a75-9a30-302d45695d2c",
+      "eventTime": "2026-04-21T14:38:40Z",
+      "eventName": "GetObject",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.45",
+      "userAgent": "python-requests/2.31.0",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADEVUSEREX",
+        "arn": "arn:aws:iam::123456789012:user/dev-user",
+        "accountId": "123456789012",
+        "userName": "dev-user"
+      },
+      "requestParameters": {
+        "bucketName": "prod-customer-data",
+        "key": "financial-2025.xlsx"
+      },
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S3_exfil_DOWNLOAD"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "7506c9f9-328c-4d0d-9016-668a90abc52d",
+      "eventTime": "2026-04-21T15:30:00Z",
+      "eventName": "DescribeInstances",
+      "eventSource": "ec2.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.10",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDASENIORADMINEX",
+        "arn": "arn:aws:iam::123456789012:user/senior-admin",
+        "accountId": "123456789012",
+        "userName": "senior-admin"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal_post_incident"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "7246e6ab-297f-448f-b664-f924c005fc34",
+      "eventTime": "2026-04-21T16:00:00Z",
+      "eventName": "DescribeSubnets",
+      "eventSource": "ec2.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.15",
+      "userAgent": "APN/1.0 HashiCorp/1.0 Terraform/1.5.7",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDAOPSENGINEEREX",
+        "arn": "arn:aws:iam::123456789012:user/ops-engineer",
+        "accountId": "123456789012",
+        "userName": "ops-engineer"
+      },
+      "requestParameters": {},
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "f810480f-1361-46ff-81fe-28c491d67caf",
+      "eventTime": "2026-04-21T16:15:00Z",
+      "eventName": "AssumeRole",
+      "eventSource": "sts.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.30",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "AssumedRole",
+        "principalId": "AROACIPIPELINEBOT:session-1",
+        "arn": "arn:aws:sts::123456789012:assumed-role/ci-pipeline-bot/session-1",
+        "accountId": "123456789012",
+        "sessionContext": {
+          "sessionIssuer": {
+            "type": "Role",
+            "userName": "ci-pipeline-bot",
+            "arn": "arn:aws:iam::123456789012:role/ci-pipeline-bot"
+          }
+        }
+      },
+      "requestParameters": {
+        "roleArn": "arn:aws:iam::123456789012:role/deploy-role",
+        "roleSessionName": "ci-build-1236"
+      },
+      "responseElements": null,
+      "readOnly": false,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "09c560a8-72a5-48a3-8168-c8ecd1ea0e64",
+      "eventTime": "2026-04-21T16:30:00Z",
+      "eventName": "GetParameter",
+      "eventSource": "ssm.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.10",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDASENIORADMINEX",
+        "arn": "arn:aws:iam::123456789012:user/senior-admin",
+        "accountId": "123456789012",
+        "userName": "senior-admin"
+      },
+      "requestParameters": {
+        "name": "/prod/api-token"
+      },
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    },
+    {
+      "eventVersion": "1.09",
+      "eventID": "454cad3b-7691-4c6d-9509-75399ed92c17",
+      "eventTime": "2026-04-21T16:45:00Z",
+      "eventName": "GetObject",
+      "eventSource": "s3.amazonaws.com",
+      "awsRegion": "eu-west-1",
+      "sourceIPAddress": "198.18.0.22",
+      "userAgent": "aws-cli/2.13.24 Python/3.11.6 Linux/x86_64",
+      "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "AIDADATAANALYSTEX",
+        "arn": "arn:aws:iam::123456789012:user/data-analyst",
+        "accountId": "123456789012",
+        "userName": "data-analyst"
+      },
+      "requestParameters": {
+        "bucketName": "reports-quarterly",
+        "key": "q1-summary.csv"
+      },
+      "responseElements": null,
+      "readOnly": true,
+      "managementEvent": true,
+      "eventCategory": "Management",
+      "recipientAccountId": "123456789012",
+      "_scenario": "S5_normal"
+    }
+  ]
+}
