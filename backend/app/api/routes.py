@@ -53,3 +53,34 @@ def history_endpoint(
         count=len(items),
         items=items,
     )
+
+
+from app.db.models import Alert  # mevcut import'a ekle, en üstte
+from app.api.schemas import AlertItem, AlertsResponse  # mevcut import'a ekle
+
+
+@router.get("/alerts", response_model=AlertsResponse)
+def alerts_endpoint(
+    severity: str | None = Query(default=None, description="Severity filter"),
+    limit: int = Query(default=50, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    """Güvenlik alert'lerini döndür. Henüz tool'lar bağlı değilken boş gelir."""
+    stmt = select(Alert).order_by(Alert.created_at.desc()).limit(limit)
+    if severity:
+        stmt = stmt.where(Alert.severity == severity.upper())
+
+    rows = db.execute(stmt).scalars().all()
+    items = [AlertItem.model_validate(r) for r in rows]
+
+    # Severity bazlı sayım — chart için lazım
+    severity_counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+    for item in items:
+        if item.severity in severity_counts:
+            severity_counts[item.severity] += 1
+
+    return AlertsResponse(
+        count=len(items),
+        severity_counts=severity_counts,
+        items=items,
+    )
