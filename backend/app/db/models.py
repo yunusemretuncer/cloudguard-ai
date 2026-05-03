@@ -47,4 +47,4 @@ class Alert(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         index=True,
-    )    
+    )

@@ -4,14 +4,19 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.agent.core import chat as agent_chat
-from app.api.schemas import (
+from app.api.schemas import (  # mevcut import'a ekle
+    AlertItem,
+    AlertsResponse,
     ChatHistoryItem,
     ChatHistoryResponse,
     ChatRequest,
     ChatResponse,
 )
 from app.db.database import get_db
-from app.db.models import ChatMessage
+from app.db.models import (
+    Alert,  # mevcut import'a ekle, en üstte
+    ChatMessage,
+)
 
 router = APIRouter()
 
@@ -53,11 +58,6 @@ def history_endpoint(
         count=len(items),
         items=items,
     )
-
-
-from app.db.models import Alert  # mevcut import'a ekle, en üstte
-from app.api.schemas import AlertItem, AlertsResponse  # mevcut import'a ekle
-
 
 @router.get("/alerts", response_model=AlertsResponse)
 def alerts_endpoint(
