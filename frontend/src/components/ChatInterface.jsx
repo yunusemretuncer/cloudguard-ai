@@ -6,7 +6,7 @@ import MessageBubble from './MessageBubble'
 // kendi konuşmasına sahip olsun. İleride kullanıcı bazlı yapılır.
 const generateThreadId = () => `web-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
-function ChatInterface() {
+function ChatInterface({ onToolUse }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -47,8 +47,14 @@ function ChatInterface() {
         role: 'agent',
         content: data.reply,
         timestamp: new Date().toISOString(),
+        toolCalls: data.tool_calls || [],
       }
       setMessages((prev) => [...prev, agentMessage])
+
+      if (onToolUse && data.tool_calls?.length > 0) {
+        onToolUse(data.tool_calls)
+      }
+      
     } catch (err) {
       const errMsg =
         err instanceof ApiError
@@ -101,6 +107,7 @@ function ChatInterface() {
             role={msg.role}
             content={msg.content}
             timestamp={msg.timestamp}
+            toolCalls={msg.toolCalls}
           />
         ))}
 

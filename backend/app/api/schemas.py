@@ -8,10 +8,14 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=4000)
     thread_id: str = Field(default="default", max_length=64)
 
+class ToolCall(BaseModel):
+    name: str
+    args: dict
 
 class ChatResponse(BaseModel):
     reply: str
     thread_id: str
+    tool_calls: list[ToolCall] = []
 
 
 class ChatHistoryItem(BaseModel):

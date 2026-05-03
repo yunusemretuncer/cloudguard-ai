@@ -58,42 +58,75 @@ def get_agent():
 
 
 def _normalize_content(content) -> str:
-    """Agent cevabını string'e normalize et.
-
-    LangChain'in AIMessage.content alanı duruma göre üç farklı tipte gelebilir:
-    - str: Düz metin cevap (en yaygın)
-    - list[dict]: Gemini'nin structured content blocks formatı,
-                  tool kullanımı sonrası çıkabiliyor.
-                  Örn: [{"type": "text", "text": "..."}, {"type": "tool_use", ...}]
-    - list[str]: Bazı LLM'lerde parça parça cevap
-
-    Hepsini tek string'e indirgiyoruz çünkü DB'ye Text olarak yazıyoruz ve
-    UI string bekliyor.
-    """
+    """Agent cevabını string'e normalize et."""
     if isinstance(content, str):
         return content
     if isinstance(content, list):
         parts = []
         for block in content:
             if isinstance(block, dict):
-                # Gemini formatı: {"type": "text", "text": "..."}
                 if block.get("type") == "text" and "text" in block:
                     parts.append(block["text"])
-                # Diğer block tipleri (tool_use, image vs.) atlanır —
-                # kullanıcıya göstermek istemiyoruz
             elif isinstance(block, str):
                 parts.append(block)
         return "\n".join(parts).strip()
-    # Beklenmedik tip — string'e zorla çevir
     return str(content)
 
 
-def chat(message: str, thread_id: str = "default") -> str:
+def _extract_tool_calls(messages: list) -> list[dict]:
+    """Agent'ın bu turda çağırdığı tool'ları çıkart.
+
+    LangGraph mesaj zinciri tool kullanıldığında şöyle görünür:
+        HumanMessage(user input)
+        AIMessage(tool_calls=[{name, args, id}])    <- agent karar verdi
+        ToolMessage(content=..., tool_call_id=...)  <- tool çıktısı
+        AIMessage(content=final answer)             <- agent özetledi
+
+    Bu turda yapılan tool çağrılarını döndürürüz. Önceki turlardaki
+    çağrıları katmamak için sondan başa doğru gidip ilk HumanMessage'a
+    kadar tarıyoruz.
+    """
+    tool_calls = []
+
+    # Sondan başa: bu turun başlangıcını bul (en son HumanMessage)
+    last_human_idx = -1
+    for i in range(len(messages) - 1, -1, -1):
+        msg = messages[i]
+        if msg.__class__.__name__ == "HumanMessage":
+            last_human_idx = i
+            break
+
+    if last_human_idx == -1:
+        return []
+
+    # Bu turdaki AIMessage'lardaki tool_calls'ları topla
+    for msg in messages[last_human_idx + 1:]:
+        if msg.__class__.__name__ == "AIMessage":
+            calls = getattr(msg, "tool_calls", None) or []
+            for call in calls:
+                # call: {"name": "...", "args": {...}, "id": "..."}
+                tool_calls.append({
+                    "name": call.get("name", "unknown"),
+                    "args": call.get("args", {}),
+                })
+
+    return tool_calls
+
+
+def chat(message: str, thread_id: str = "default") -> dict:
+    """Agent'a mesaj gönder, cevap + tool kullanımı döndür.
+
+    Returns:
+        {"reply": str, "tool_calls": [{"name": str, "args": dict}, ...]}
+    """
     agent = get_agent()
     config = {"configurable": {"thread_id": thread_id}}
     result = agent.invoke(
         {"messages": [("user", message)]},
         config=config,
     )
-    last_message = result["messages"][-1]
-    return _normalize_content(last_message.content)
+    messages = result["messages"]
+    return {
+        "reply": _normalize_content(messages[-1].content),
+        "tool_calls": _extract_tool_calls(messages),
+    }
