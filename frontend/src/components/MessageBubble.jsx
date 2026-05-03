@@ -6,7 +6,7 @@
  *   content: string
  *   timestamp?: string (ISO date)
  */
-function MessageBubble({ role, content, timestamp }) {
+function MessageBubble({ role, content, timestamp, toolCalls = [] }) {
   const isUser = role === 'user'
 
   return (
@@ -33,6 +33,20 @@ function MessageBubble({ role, content, timestamp }) {
           <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
             {content}
           </div>
+
+          {/* Tool kullanım rozeti — sadece agent mesajlarında */}
+          {!isUser && toolCalls.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-slate-700/50 flex flex-wrap gap-1">
+              {toolCalls.map((tc, idx) => (
+                <span
+                  key={idx}
+                  className="text-xs font-mono bg-blue-900/40 text-blue-300 border border-blue-800 rounded px-2 py-0.5"
+                >
+                  ⚙ {tc.name}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -40,3 +54,4 @@ function MessageBubble({ role, content, timestamp }) {
 }
 
 export default MessageBubble
+

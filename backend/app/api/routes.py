@@ -23,11 +23,12 @@ router = APIRouter()
 
 @router.post("/chat", response_model=ChatResponse)
 def chat_endpoint(req: ChatRequest, db: Session = Depends(get_db)):
-    """Kullanıcı mesajını agent'a iletir, cevabı döndürür.
-    Konuşmayı DB'ye kaydeder."""
-    reply = agent_chat(req.message, thread_id=req.thread_id)
+    """Kullanıcı mesajını agent'a iletir, cevabı döndürür."""
+    result = agent_chat(req.message, thread_id=req.thread_id)
+    reply = result["reply"]
+    tool_calls = result["tool_calls"]
 
-    # DB'ye kaydet
+    # DB'ye kaydet (sadece reply, tool_calls memory'de zaten var)
     record = ChatMessage(
         thread_id=req.thread_id,
         user_message=req.message,
@@ -36,8 +37,11 @@ def chat_endpoint(req: ChatRequest, db: Session = Depends(get_db)):
     db.add(record)
     db.commit()
 
-    return ChatResponse(reply=reply, thread_id=req.thread_id)
-
+    return ChatResponse(
+        reply=reply,
+        thread_id=req.thread_id,
+        tool_calls=tool_calls,
+    )
 
 @router.get("/history", response_model=ChatHistoryResponse)
 def history_endpoint(
