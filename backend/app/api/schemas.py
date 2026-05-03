@@ -28,3 +28,23 @@ class ChatHistoryResponse(BaseModel):
     thread_id: str | None
     count: int
     items: list[ChatHistoryItem]
+
+
+class AlertItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    finding_type: str
+    severity: str
+    title: str
+    detail: str
+    source_ip: str | None = None
+    mitre_technique: str | None = None
+    thread_id: str | None = None
+    created_at: datetime
+
+
+class AlertsResponse(BaseModel):
+    count: int
+    severity_counts: dict[str, int]
+    items: list[AlertItem]

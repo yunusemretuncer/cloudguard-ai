@@ -49,6 +49,14 @@ export const api = {
 
   /** Backend sağlık kontrolü. */
   health: () => request('/health'),
+
+  /** Alert listesi. */
+  alerts: (severity = null, limit = 50) => {
+    const params = new URLSearchParams({ limit: String(limit) })
+    if (severity) params.append('severity', severity)
+    return request(`/alerts?${params.toString()}`)
+  },
 }
 
 export { ApiError }
+
