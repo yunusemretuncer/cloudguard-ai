@@ -6,7 +6,7 @@ import ToolActivity from './ToolActivity'
 import { api } from '../services/api'
 import { MOCK_ALERTS, MOCK_SEVERITY_COUNTS } from '../services/mockData'
 
-const USE_MOCK_DATA = true
+const USE_MOCK_DATA = false   // ← önce true'ydu, şimdi false
 const MAX_TOOL_HISTORY = 20  // panelde son 20 çağrıyı tut
 
 function Dashboard() {
@@ -39,6 +39,13 @@ function Dashboard() {
     setToolActivities((prev) =>
       [...newActivities, ...prev].slice(0, MAX_TOOL_HISTORY)
     )
+     const alertGenerated = toolCalls.some((tc) => tc.name === 'generate_alert')
+    if (alertGenerated) {
+      api.alerts().then((data) => {
+        setAlerts(data.items)
+        setSeverityCounts(data.severity_counts)
+      }).catch((err) => console.error('Alert refresh failed:', err))
+    }
   }
 
   return (

@@ -42,8 +42,12 @@ class AlertItem(BaseModel):
     severity: str
     title: str
     detail: str
-    source_ip: str | None = None
+    mitre_id: str | None = None
+    mitre_tactic: str | None = None
     mitre_technique: str | None = None
+    source_ip: str | None = None
+    user_name: str | None = None
+    resource_id: str | None = None
     thread_id: str | None = None
     created_at: datetime
 

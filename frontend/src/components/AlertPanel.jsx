@@ -47,11 +47,16 @@ function AlertPanel({ alerts }) {
           <div className="text-xs text-slate-400 leading-relaxed mb-2">{alert.detail}</div>
 
           <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-            {alert.mitre_technique && (
-              <span className="font-mono">MITRE: {alert.mitre_technique}</span>
+            {alert.mitre_id && (
+              <span className="font-mono">
+                MITRE: {alert.mitre_id}{alert.mitre_technique ? ` — ${alert.mitre_technique}` : ''}
+              </span>
             )}
             {alert.source_ip && (
               <span className="font-mono">IP: {alert.source_ip}</span>
+            )}
+            {alert.user_name && (
+              <span className="font-mono">User: {alert.user_name}</span>
             )}
           </div>
         </div>

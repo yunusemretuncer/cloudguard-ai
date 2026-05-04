@@ -7,16 +7,19 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.prebuilt import create_react_agent
 
 from app.agent.prompts import SYSTEM_PROMPT
-from app.agent.tools.ip_reputation import check_ip_reputation
-from app.agent.tools.log_analyzer import (
-    analyze_auth_logs,
-    analyze_cloudtrail_logs,
-    analyze_vpc_flow_logs,
-)
 from app.config import settings
 
-# Bu dosya: backend/app/agent/core.py
-# Hedef path: backend/data/agent_memory.db
+from app.agent.tools.log_analyzer import (
+    analyze_cloudtrail_logs,
+    analyze_vpc_flow_logs,
+    analyze_auth_logs,
+)
+from app.agent.tools.ip_reputation import check_ip_reputation
+from app.agent.tools.config_auditor import audit_cloud_config
+from app.agent.tools.alert_generator import generate_alert
+from app.agent.tools.remediation import get_remediation
+
+
 DB_PATH = Path(__file__).parent.parent.parent / "data" / "agent_memory.db"
 
 _agent = None
@@ -30,14 +33,21 @@ def build_agent():
     )
 
     tools = [
+        # Detection (log analiz)
         analyze_cloudtrail_logs,
         analyze_vpc_flow_logs,
         analyze_auth_logs,
+        # Detection (config audit)
+        audit_cloud_config,
+        # Threat intel
         check_ip_reputation,
+        # Persistence
+        generate_alert,
+        # Response
+        get_remediation,
     ]
 
-    # Kalıcı bellek — backend/data/ altında, mutlak path
-    DB_PATH.parent.mkdir(exist_ok=True)  # data/ klasörü yoksa oluştur
+    DB_PATH.parent.mkdir(exist_ok=True)
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     checkpointer = SqliteSaver(conn)
 
@@ -58,7 +68,6 @@ def get_agent():
 
 
 def _normalize_content(content) -> str:
-    """Agent cevabını string'e normalize et."""
     if isinstance(content, str):
         return content
     if isinstance(content, list):
@@ -74,51 +83,26 @@ def _normalize_content(content) -> str:
 
 
 def _extract_tool_calls(messages: list) -> list[dict]:
-    """Agent'ın bu turda çağırdığı tool'ları çıkart.
-
-    LangGraph mesaj zinciri tool kullanıldığında şöyle görünür:
-        HumanMessage(user input)
-        AIMessage(tool_calls=[{name, args, id}])    <- agent karar verdi
-        ToolMessage(content=..., tool_call_id=...)  <- tool çıktısı
-        AIMessage(content=final answer)             <- agent özetledi
-
-    Bu turda yapılan tool çağrılarını döndürürüz. Önceki turlardaki
-    çağrıları katmamak için sondan başa doğru gidip ilk HumanMessage'a
-    kadar tarıyoruz.
-    """
     tool_calls = []
-
-    # Sondan başa: bu turun başlangıcını bul (en son HumanMessage)
     last_human_idx = -1
     for i in range(len(messages) - 1, -1, -1):
-        msg = messages[i]
-        if msg.__class__.__name__ == "HumanMessage":
+        if messages[i].__class__.__name__ == "HumanMessage":
             last_human_idx = i
             break
-
     if last_human_idx == -1:
         return []
-
-    # Bu turdaki AIMessage'lardaki tool_calls'ları topla
     for msg in messages[last_human_idx + 1:]:
         if msg.__class__.__name__ == "AIMessage":
             calls = getattr(msg, "tool_calls", None) or []
             for call in calls:
-                # call: {"name": "...", "args": {...}, "id": "..."}
                 tool_calls.append({
                     "name": call.get("name", "unknown"),
                     "args": call.get("args", {}),
                 })
-
     return tool_calls
 
 
 def chat(message: str, thread_id: str = "default") -> dict:
-    """Agent'a mesaj gönder, cevap + tool kullanımı döndür.
-
-    Returns:
-        {"reply": str, "tool_calls": [{"name": str, "args": dict}, ...]}
-    """
     agent = get_agent()
     config = {"configurable": {"thread_id": thread_id}}
     result = agent.invoke(
