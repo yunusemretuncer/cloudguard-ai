@@ -624,3 +624,467 @@ class TestConfigAuditor:
         # auth_logs report identifies web-server-01 as the compromised host;
         # config_auditor identifies the SG that backs it.
         assert "web-server-01" in auth
+
+
+# ============================================================================
+# Section 10: remediation tests
+# ============================================================================
+
+import remediation  # noqa: E402,F401  (imported for monkeypatching in tests if needed)
+from remediation import get_remediation, PLAYBOOKS, _normalize, _parse_context  # noqa: E402
+
+
+class TestRemediation:
+
+    # ---- Helper functions --------------------------------------------------
+
+    def test_normalize_known_high_level(self):
+        assert _normalize("BRUTE_FORCE") == "BRUTE_FORCE"
+        assert _normalize("S3_PUBLIC_EXPOSURE") == "S3_PUBLIC_EXPOSURE"
+
+    def test_normalize_specific_to_category(self):
+        assert _normalize("BRUTE_FORCE_CONSOLE_LOGIN") == "BRUTE_FORCE"
+        assert _normalize("SSH_BRUTE_FORCE_NETWORK") == "BRUTE_FORCE"
+        assert _normalize("S3_PUBLIC_BUCKET_EXPOSURE") == "S3_PUBLIC_EXPOSURE"
+        assert _normalize("S3_MASS_OBJECT_ACCESS") == "DATA_EXFILTRATION"
+        assert _normalize("SSH_COMPROMISE_AFTER_BRUTE_FORCE") == "SSH_COMPROMISE"
+
+    def test_normalize_strips_colon_suffix(self):
+        # log_analyzer emits "PRIVILEGE_ESCALATION:CreateRole" etc.
+        assert _normalize("PRIVILEGE_ESCALATION:CreateRole") == "PRIVILEGE_ESCALATION"
+        assert _normalize("PRIVILEGE_ESCALATION:AttachUserPolicy") == "PRIVILEGE_ESCALATION"
+
+    def test_normalize_case_insensitive(self):
+        assert _normalize("brute_force") == "BRUTE_FORCE"
+        assert _normalize("Brute_Force") == "BRUTE_FORCE"
+
+    def test_normalize_empty_or_unknown(self):
+        assert _normalize("") == ""
+        assert _normalize("NONEXISTENT") == ""
+
+    # ---- Context parsing --------------------------------------------------
+
+    def test_parse_context_simple(self):
+        ctx = _parse_context("ip=1.2.3.4")
+        assert ctx == {"ip": "1.2.3.4"}
+
+    def test_parse_context_multiple(self):
+        ctx = _parse_context("ip=1.2.3.4, user=alice, bucket=mydata")
+        assert ctx == {"ip": "1.2.3.4", "user": "alice", "bucket": "mydata"}
+
+    def test_parse_context_whitespace_separated(self):
+        ctx = _parse_context("ip=1.2.3.4 user=alice")
+        assert ctx == {"ip": "1.2.3.4", "user": "alice"}
+
+    def test_parse_context_drops_unknown_keys(self):
+        ctx = _parse_context("ip=1.2.3.4, xyz=foo")
+        assert "ip" in ctx
+        assert "xyz" not in ctx  # 'xyz' is not in PLACEHOLDER_KEYS
+
+    def test_parse_context_empty(self):
+        assert _parse_context("") == {}
+        assert _parse_context(None) == {}
+
+    # ---- Tool invocation: each playbook ------------------------------------
+
+    @pytest.mark.parametrize("finding_type,expected_mitre", [
+        ("BRUTE_FORCE",                    "T1110"),
+        ("PRIVILEGE_ESCALATION",           "T1098"),
+        ("SSH_COMPROMISE",                 "T1078"),
+        ("SUDO_ESCALATION",                "T1548"),
+        ("UNAUTHORIZED_ACCESS",            "T1078"),
+        ("S3_PUBLIC_EXPOSURE",             "T1530"),
+        ("DATA_EXFILTRATION",              "T1048"),
+        ("NETWORK_RECON",                  "T1046"),
+        ("SECURITY_GROUP_MISCONFIG",       "T1133"),
+        ("IAM_HYGIENE",                    "T1078"),
+        ("RDS_EXPOSURE",                   "T1530"),
+    ])
+    def test_each_playbook_returns_full_structure(self, finding_type, expected_mitre):
+        r = (get_remediation.invoke({"finding_type": finding_type})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation(finding_type))
+        assert "Remediation Playbook" in r
+        assert expected_mitre in r
+        assert "Immediate" in r
+        assert "Investigation" in r
+        assert "Long-term" in r
+        assert "NIST SP 800-61" in r
+
+    # ---- Specific finding types from other tools work ---------------------
+
+    def test_specific_finding_type_routes_correctly(self):
+        # log_analyzer emits this exact string; remediation must handle it
+        r = (get_remediation.invoke({"finding_type": "PRIVILEGE_ESCALATION:CreateAccessKey"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("PRIVILEGE_ESCALATION:CreateAccessKey"))
+        assert "T1098" in r
+
+    def test_s3_mass_access_routes_to_exfiltration(self):
+        r = (get_remediation.invoke({"finding_type": "S3_MASS_OBJECT_ACCESS"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("S3_MASS_OBJECT_ACCESS"))
+        assert "Data Exfiltration" in r
+        assert "T1048" in r
+
+    # ---- Context substitution ---------------------------------------------
+
+    def test_context_substitution_ip(self):
+        r = (get_remediation.invoke({"finding_type": "BRUTE_FORCE",
+                                      "context": "ip=203.0.113.45"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("BRUTE_FORCE", "ip=203.0.113.45"))
+        assert "203.0.113.45" in r
+        assert "<IP>" not in r  # placeholder should be replaced
+
+    def test_context_substitution_multiple(self):
+        r = (get_remediation.invoke({
+                "finding_type": "PRIVILEGE_ESCALATION",
+                "context": "user=dev-user, key_id=AKIATEST123"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("PRIVILEGE_ESCALATION",
+                                  "user=dev-user, key_id=AKIATEST123"))
+        assert "dev-user" in r
+        assert "AKIATEST123" in r
+        assert "<USER>" not in r
+        assert "<KEY_ID>" not in r
+
+    def test_context_substitution_bucket(self):
+        r = (get_remediation.invoke({"finding_type": "S3_PUBLIC_EXPOSURE",
+                                      "context": "bucket=prod-customer-data"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("S3_PUBLIC_EXPOSURE", "bucket=prod-customer-data"))
+        assert "prod-customer-data" in r
+        assert "<BUCKET>" not in r
+
+    def test_no_context_keeps_placeholders(self):
+        # Without context, placeholders should remain visible (still useful
+        # as a copy-paste template the user fills in)
+        r = (get_remediation.invoke({"finding_type": "SSH_COMPROMISE"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("SSH_COMPROMISE"))
+        assert "<HOST>" in r or "<USER>" in r
+
+    # ---- Error handling ---------------------------------------------------
+
+    def test_unknown_finding_type_helpful_error(self):
+        r = (get_remediation.invoke({"finding_type": "TOTALLY_MADE_UP"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("TOTALLY_MADE_UP"))
+        assert "❌" in r
+        assert "TOTALLY_MADE_UP" in r
+        assert "Available playbooks" in r
+
+    def test_empty_finding_type_returns_error(self):
+        r = (get_remediation.invoke({"finding_type": ""})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation(""))
+        assert "❌" in r
+
+    # ---- Structural checks ------------------------------------------------
+
+    def test_all_playbooks_have_required_fields(self):
+        for key, pb in PLAYBOOKS.items():
+            assert "title" in pb,         f"{key} missing title"
+            assert "mitre_id" in pb,      f"{key} missing mitre_id"
+            assert "mitre_tactic" in pb,  f"{key} missing mitre_tactic"
+            assert "mitre_technique" in pb, f"{key} missing mitre_technique"
+            assert "immediate" in pb and len(pb["immediate"]) >= 1
+            assert "investigation" in pb and len(pb["investigation"]) >= 1
+            assert "long_term" in pb and len(pb["long_term"]) >= 1
+
+    def test_aws_cli_commands_present(self):
+        # At least the most common playbooks should include CLI commands
+        r_brute = (get_remediation.invoke({"finding_type": "BRUTE_FORCE"})
+                   if hasattr(get_remediation, "invoke")
+                   else get_remediation("BRUTE_FORCE"))
+        assert "aws " in r_brute  # AWS CLI command(s)
+
+        r_s3 = (get_remediation.invoke({"finding_type": "S3_PUBLIC_EXPOSURE"})
+                if hasattr(get_remediation, "invoke")
+                else get_remediation("S3_PUBLIC_EXPOSURE"))
+        assert "aws s3api" in r_s3
+
+
+# ============================================================================
+# Section 11: alert_generator tests
+# ============================================================================
+# These tests stub out the DB layer with an in-memory SQLite so they
+# can run without the full backend wired up (CI doesn't need to spin
+# up the FastAPI app to test tool logic).
+
+class TestAlertGenerator:
+
+    @pytest.fixture(autouse=True)
+    def isolated_db(self, monkeypatch, tmp_path):
+        """Replace the project DB with an in-memory SQLite + create the
+        Alert table fresh for each test. Auto-applied to every test in
+        this class via autouse=True."""
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker, DeclarativeBase
+
+        # Build a minimal Base + Alert model in isolation (decoupled
+        # from the project's app.db.* — those imports may not resolve
+        # in CI's working directory).
+        class _Base(DeclarativeBase):
+            pass
+
+        from sqlalchemy import DateTime, Integer, String, Text
+        from sqlalchemy.orm import Mapped, mapped_column
+        from datetime import datetime, timezone
+
+        class _Alert(_Base):
+            __tablename__ = "alerts"
+            id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+            created_at: Mapped[datetime] = mapped_column(
+                DateTime(timezone=True),
+                default=lambda: datetime.now(timezone.utc),
+                index=True,
+            )
+            finding_type: Mapped[str] = mapped_column(String(64), index=True)
+            severity: Mapped[str] = mapped_column(String(16), index=True)
+            title: Mapped[str] = mapped_column(String(256))
+            detail: Mapped[str] = mapped_column(Text)
+            mitre_id: Mapped[str | None] = mapped_column(String(16), nullable=True)
+            mitre_tactic: Mapped[str | None] = mapped_column(String(64), nullable=True)
+            mitre_technique: Mapped[str | None] = mapped_column(String(128), nullable=True)
+            source_ip: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+            user_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+            resource_id: Mapped[str | None] = mapped_column(String(256), nullable=True)
+            thread_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+
+        engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
+        _Base.metadata.create_all(bind=engine)
+        TestSession = sessionmaker(bind=engine)
+
+        # Patch the import targets that alert_generator._persist_alert uses.
+        # We construct fake `app.db.database` and `app.db.models` modules
+        # so the production import path inside _persist_alert resolves to
+        # our test session and Alert class.
+        import sys
+        import types
+        fake_db_pkg = types.ModuleType("app.db")
+        fake_db_module = types.ModuleType("app.db.database")
+        fake_db_module.SessionLocal = TestSession
+        fake_models_module = types.ModuleType("app.db.models")
+        fake_models_module.Alert = _Alert
+
+        fake_app = types.ModuleType("app")
+        fake_app.db = fake_db_pkg
+        fake_db_pkg.database = fake_db_module
+        fake_db_pkg.models = fake_models_module
+
+        monkeypatch.setitem(sys.modules, "app", fake_app)
+        monkeypatch.setitem(sys.modules, "app.db", fake_db_pkg)
+        monkeypatch.setitem(sys.modules, "app.db.database", fake_db_module)
+        monkeypatch.setitem(sys.modules, "app.db.models", fake_models_module)
+
+        self._SessionLocal = TestSession
+        self._Alert = _Alert
+        yield
+        # Cleanup happens automatically via tmp_path
+
+    # ---- Smoke -------------------------------------------------------------
+
+    def test_records_minimal_alert(self):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": "BRUTE_FORCE",
+            "severity": "HIGH",
+            "detail": "test details",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert("BRUTE_FORCE", "HIGH", "test details"))
+        assert "Alert Recorded" in result
+        assert "Alert ID:** #1" in result
+        assert "T1110" in result
+
+    def test_alert_persisted_to_db(self):
+        from alert_generator import generate_alert
+        if hasattr(generate_alert, "invoke"):
+            generate_alert.invoke({
+                "finding_type": "BRUTE_FORCE",
+                "severity": "HIGH",
+                "detail": "test",
+                "source_ip": "203.0.113.45",
+            })
+        else:
+            generate_alert("BRUTE_FORCE", "HIGH", "test", "203.0.113.45")
+        # Verify row exists with correct values
+        db = self._SessionLocal()
+        try:
+            rows = db.query(self._Alert).all()
+            assert len(rows) == 1
+            assert rows[0].finding_type == "BRUTE_FORCE"
+            assert rows[0].severity == "HIGH"
+            assert rows[0].source_ip == "203.0.113.45"
+            assert rows[0].mitre_id == "T1110"
+        finally:
+            db.close()
+
+    # ---- MITRE mapping -----------------------------------------------------
+
+    @pytest.mark.parametrize("finding_type,expected_mitre", [
+        ("BRUTE_FORCE",                        "T1110"),
+        ("BRUTE_FORCE_CONSOLE_LOGIN",          "T1110"),
+        ("SSH_BRUTE_FORCE_NETWORK",            "T1110"),
+        ("PRIVILEGE_ESCALATION",               "T1098"),
+        ("PRIVILEGE_ESCALATION:CreateRole",    "T1098"),
+        ("PRIVILEGE_ESCALATION:AttachUserPolicy", "T1098"),
+        ("UNAUTHORIZED_ACCESS",                "T1078"),
+        ("SSH_COMPROMISE",                     "T1078"),
+        ("SUDO_ESCALATION",                    "T1548"),
+        ("S3_PUBLIC_EXPOSURE",                 "T1530"),
+        ("S3_PUBLIC_BUCKET_EXPOSURE",          "T1530"),
+        ("S3_MASS_OBJECT_ACCESS",              "T1048"),
+        ("DATA_EXFILTRATION",                  "T1048"),
+        ("PORT_SCAN",                          "T1046"),
+        ("NETWORK_RECON",                      "T1046"),
+        ("SECURITY_GROUP_MISCONFIG",           "T1133"),
+        ("IAM_HYGIENE",                        "T1078"),
+        ("RDS_EXPOSURE",                       "T1530"),
+    ])
+    def test_mitre_mapping_for_finding(self, finding_type, expected_mitre):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": finding_type, "severity": "HIGH",
+            "detail": "test",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert(finding_type, "HIGH", "test"))
+        assert expected_mitre in result, \
+            f"{finding_type} should map to {expected_mitre}; got: {result}"
+
+    # ---- Severity validation ----------------------------------------------
+
+    def test_invalid_severity_coerced_to_low(self):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": "BRUTE_FORCE", "severity": "NUCLEAR",
+            "detail": "test",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert("BRUTE_FORCE", "NUCLEAR", "test"))
+        assert "Severity:** LOW" in result
+
+    def test_lowercase_severity_accepted(self):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": "BRUTE_FORCE", "severity": "high",
+            "detail": "test",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert("BRUTE_FORCE", "high", "test"))
+        assert "Severity:** HIGH" in result
+
+    def test_empty_severity_defaults_to_low(self):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": "BRUTE_FORCE", "severity": "",
+            "detail": "test",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert("BRUTE_FORCE", "", "test"))
+        assert "Severity:** LOW" in result
+
+    # ---- Unknown finding type ----------------------------------------------
+
+    def test_unknown_finding_records_without_mitre(self):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": "TOTALLY_MADE_UP_THING", "severity": "MEDIUM",
+            "detail": "test",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert("TOTALLY_MADE_UP_THING", "MEDIUM", "test"))
+        # Alert is still recorded (DB row exists)
+        assert "Alert Recorded" in result
+        # But no MITRE mapping
+        assert "MITRE ATT&CK" not in result
+        # Row in DB should have nulls for mitre_*
+        db = self._SessionLocal()
+        try:
+            row = db.query(self._Alert).first()
+            assert row.mitre_id is None
+            assert row.mitre_tactic is None
+        finally:
+            db.close()
+
+    # ---- Optional context fields -------------------------------------------
+
+    def test_empty_strings_stored_as_null(self):
+        """LangChain passes "" for unfilled string params; we should store NULL."""
+        from alert_generator import generate_alert
+        if hasattr(generate_alert, "invoke"):
+            generate_alert.invoke({
+                "finding_type": "BRUTE_FORCE", "severity": "HIGH",
+                "detail": "test", "source_ip": "", "user_name": "",
+                "resource_id": "",
+            })
+        else:
+            generate_alert("BRUTE_FORCE", "HIGH", "test", "", "", "")
+        db = self._SessionLocal()
+        try:
+            row = db.query(self._Alert).first()
+            assert row.source_ip is None
+            assert row.user_name is None
+            assert row.resource_id is None
+        finally:
+            db.close()
+
+    def test_all_context_fields_stored(self):
+        from alert_generator import generate_alert
+        if hasattr(generate_alert, "invoke"):
+            generate_alert.invoke({
+                "finding_type": "S3_PUBLIC_BUCKET_EXPOSURE",
+                "severity": "CRITICAL",
+                "detail": "Bucket public",
+                "source_ip": "203.0.113.45",
+                "user_name": "dev-user",
+                "resource_id": "prod-customer-data",
+            })
+        else:
+            generate_alert("S3_PUBLIC_BUCKET_EXPOSURE", "CRITICAL",
+                           "Bucket public", "203.0.113.45", "dev-user",
+                           "prod-customer-data")
+        db = self._SessionLocal()
+        try:
+            row = db.query(self._Alert).first()
+            assert row.source_ip == "203.0.113.45"
+            assert row.user_name == "dev-user"
+            assert row.resource_id == "prod-customer-data"
+        finally:
+            db.close()
+
+    # ---- Multiple alerts: IDs increment, no collision ----------------------
+
+    def test_multiple_alerts_get_unique_ids(self):
+        from alert_generator import generate_alert
+        invoke = (generate_alert.invoke
+                  if hasattr(generate_alert, "invoke")
+                  else lambda d: generate_alert(**d))
+        for i in range(3):
+            invoke({
+                "finding_type": "BRUTE_FORCE", "severity": "HIGH",
+                "detail": f"finding {i}",
+            })
+        db = self._SessionLocal()
+        try:
+            rows = db.query(self._Alert).order_by(self._Alert.id).all()
+            ids = [r.id for r in rows]
+            assert ids == [1, 2, 3]
+        finally:
+            db.close()
+
+    # ---- Helper functions (no DB needed) -----------------------------------
+
+    def test_normalize_finding_function(self):
+        from alert_generator import _normalize_finding
+        assert _normalize_finding("BRUTE_FORCE") == "BRUTE_FORCE"
+        assert _normalize_finding("BRUTE_FORCE_CONSOLE_LOGIN") == "BRUTE_FORCE"
+        assert _normalize_finding("PRIVILEGE_ESCALATION:CreateRole") == "PRIVILEGE_ESCALATION"
+        assert _normalize_finding("S3_MASS_OBJECT_ACCESS") == "DATA_EXFILTRATION"
+        assert _normalize_finding("") is None
+        assert _normalize_finding("UNKNOWN_TYPE") is None
+
+    def test_validate_severity_function(self):
+        from alert_generator import _validate_severity
+        assert _validate_severity("HIGH") == "HIGH"
+        assert _validate_severity("low") == "LOW"
+        assert _validate_severity("NUCLEAR") == "LOW"
+        assert _validate_severity("") == "LOW"
+        assert _validate_severity(None) == "LOW"
