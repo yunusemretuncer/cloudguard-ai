@@ -804,3 +804,285 @@ class TestRemediation:
                 if hasattr(get_remediation, "invoke")
                 else get_remediation("S3_PUBLIC_EXPOSURE"))
         assert "aws s3api" in r_s3
+
+
+# ============================================================================
+# Section 11: alert_generator tests
+# ============================================================================
+# These tests stub out the DB layer with an in-memory SQLite so they
+# can run without the full backend wired up (CI doesn't need to spin
+# up the FastAPI app to test tool logic).
+
+class TestAlertGenerator:
+
+    @pytest.fixture(autouse=True)
+    def isolated_db(self, monkeypatch, tmp_path):
+        """Replace the project DB with an in-memory SQLite + create the
+        Alert table fresh for each test. Auto-applied to every test in
+        this class via autouse=True."""
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker, DeclarativeBase
+
+        # Build a minimal Base + Alert model in isolation (decoupled
+        # from the project's app.db.* — those imports may not resolve
+        # in CI's working directory).
+        class _Base(DeclarativeBase):
+            pass
+
+        from sqlalchemy import DateTime, Integer, String, Text
+        from sqlalchemy.orm import Mapped, mapped_column
+        from datetime import datetime, timezone
+
+        class _Alert(_Base):
+            __tablename__ = "alerts"
+            id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+            created_at: Mapped[datetime] = mapped_column(
+                DateTime(timezone=True),
+                default=lambda: datetime.now(timezone.utc),
+                index=True,
+            )
+            alert_type: Mapped[str] = mapped_column(String(64), index=True)
+            severity: Mapped[str] = mapped_column(String(16), index=True)
+            details: Mapped[str] = mapped_column(Text)
+            mitre_id: Mapped[str | None] = mapped_column(String(16), nullable=True)
+            mitre_tactic: Mapped[str | None] = mapped_column(String(64), nullable=True)
+            mitre_technique: Mapped[str | None] = mapped_column(String(128), nullable=True)
+            source_ip: Mapped[str | None] = mapped_column(String(45), nullable=True, index=True)
+            user_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+            resource_id: Mapped[str | None] = mapped_column(String(256), nullable=True)
+
+        engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
+        _Base.metadata.create_all(bind=engine)
+        TestSession = sessionmaker(bind=engine)
+
+        # Patch the import targets that alert_generator._persist_alert uses.
+        # We construct fake `app.db.database` and `app.db.models` modules
+        # so the production import path inside _persist_alert resolves to
+        # our test session and Alert class.
+        import sys
+        import types
+        fake_db_pkg = types.ModuleType("app.db")
+        fake_db_module = types.ModuleType("app.db.database")
+        fake_db_module.SessionLocal = TestSession
+        fake_models_module = types.ModuleType("app.db.models")
+        fake_models_module.Alert = _Alert
+
+        fake_app = types.ModuleType("app")
+        fake_app.db = fake_db_pkg
+        fake_db_pkg.database = fake_db_module
+        fake_db_pkg.models = fake_models_module
+
+        monkeypatch.setitem(sys.modules, "app", fake_app)
+        monkeypatch.setitem(sys.modules, "app.db", fake_db_pkg)
+        monkeypatch.setitem(sys.modules, "app.db.database", fake_db_module)
+        monkeypatch.setitem(sys.modules, "app.db.models", fake_models_module)
+
+        self._SessionLocal = TestSession
+        self._Alert = _Alert
+        yield
+        # Cleanup happens automatically via tmp_path
+
+    # ---- Smoke -------------------------------------------------------------
+
+    def test_records_minimal_alert(self):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": "BRUTE_FORCE",
+            "severity": "HIGH",
+            "details": "test details",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert("BRUTE_FORCE", "HIGH", "test details"))
+        assert "Alert Recorded" in result
+        assert "Alert ID:** #1" in result
+        assert "T1110" in result
+
+    def test_alert_persisted_to_db(self):
+        from alert_generator import generate_alert
+        if hasattr(generate_alert, "invoke"):
+            generate_alert.invoke({
+                "finding_type": "BRUTE_FORCE",
+                "severity": "HIGH",
+                "details": "test",
+                "source_ip": "203.0.113.45",
+            })
+        else:
+            generate_alert("BRUTE_FORCE", "HIGH", "test", "203.0.113.45")
+        # Verify row exists with correct values
+        db = self._SessionLocal()
+        try:
+            rows = db.query(self._Alert).all()
+            assert len(rows) == 1
+            assert rows[0].alert_type == "BRUTE_FORCE"
+            assert rows[0].severity == "HIGH"
+            assert rows[0].source_ip == "203.0.113.45"
+            assert rows[0].mitre_id == "T1110"
+        finally:
+            db.close()
+
+    # ---- MITRE mapping -----------------------------------------------------
+
+    @pytest.mark.parametrize("finding_type,expected_mitre", [
+        ("BRUTE_FORCE",                        "T1110"),
+        ("BRUTE_FORCE_CONSOLE_LOGIN",          "T1110"),
+        ("SSH_BRUTE_FORCE_NETWORK",            "T1110"),
+        ("PRIVILEGE_ESCALATION",               "T1098"),
+        ("PRIVILEGE_ESCALATION:CreateRole",    "T1098"),
+        ("PRIVILEGE_ESCALATION:AttachUserPolicy", "T1098"),
+        ("UNAUTHORIZED_ACCESS",                "T1078"),
+        ("SSH_COMPROMISE",                     "T1078"),
+        ("SUDO_ESCALATION",                    "T1548"),
+        ("S3_PUBLIC_EXPOSURE",                 "T1530"),
+        ("S3_PUBLIC_BUCKET_EXPOSURE",          "T1530"),
+        ("S3_MASS_OBJECT_ACCESS",              "T1048"),
+        ("DATA_EXFILTRATION",                  "T1048"),
+        ("PORT_SCAN",                          "T1046"),
+        ("NETWORK_RECON",                      "T1046"),
+        ("SECURITY_GROUP_MISCONFIG",           "T1133"),
+        ("IAM_HYGIENE",                        "T1078"),
+        ("RDS_EXPOSURE",                       "T1530"),
+    ])
+    def test_mitre_mapping_for_finding(self, finding_type, expected_mitre):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": finding_type, "severity": "HIGH",
+            "details": "test",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert(finding_type, "HIGH", "test"))
+        assert expected_mitre in result, \
+            f"{finding_type} should map to {expected_mitre}; got: {result}"
+
+    # ---- Severity validation ----------------------------------------------
+
+    def test_invalid_severity_coerced_to_low(self):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": "BRUTE_FORCE", "severity": "NUCLEAR",
+            "details": "test",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert("BRUTE_FORCE", "NUCLEAR", "test"))
+        assert "Severity:** LOW" in result
+
+    def test_lowercase_severity_accepted(self):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": "BRUTE_FORCE", "severity": "high",
+            "details": "test",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert("BRUTE_FORCE", "high", "test"))
+        assert "Severity:** HIGH" in result
+
+    def test_empty_severity_defaults_to_low(self):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": "BRUTE_FORCE", "severity": "",
+            "details": "test",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert("BRUTE_FORCE", "", "test"))
+        assert "Severity:** LOW" in result
+
+    # ---- Unknown finding type ----------------------------------------------
+
+    def test_unknown_finding_records_without_mitre(self):
+        from alert_generator import generate_alert
+        result = (generate_alert.invoke({
+            "finding_type": "TOTALLY_MADE_UP_THING", "severity": "MEDIUM",
+            "details": "test",
+        }) if hasattr(generate_alert, "invoke")
+          else generate_alert("TOTALLY_MADE_UP_THING", "MEDIUM", "test"))
+        # Alert is still recorded (DB row exists)
+        assert "Alert Recorded" in result
+        # But no MITRE mapping
+        assert "MITRE ATT&CK" not in result
+        # Row in DB should have nulls for mitre_*
+        db = self._SessionLocal()
+        try:
+            row = db.query(self._Alert).first()
+            assert row.mitre_id is None
+            assert row.mitre_tactic is None
+        finally:
+            db.close()
+
+    # ---- Optional context fields -------------------------------------------
+
+    def test_empty_strings_stored_as_null(self):
+        """LangChain passes "" for unfilled string params; we should store NULL."""
+        from alert_generator import generate_alert
+        if hasattr(generate_alert, "invoke"):
+            generate_alert.invoke({
+                "finding_type": "BRUTE_FORCE", "severity": "HIGH",
+                "details": "test", "source_ip": "", "user_name": "",
+                "resource_id": "",
+            })
+        else:
+            generate_alert("BRUTE_FORCE", "HIGH", "test", "", "", "")
+        db = self._SessionLocal()
+        try:
+            row = db.query(self._Alert).first()
+            assert row.source_ip is None
+            assert row.user_name is None
+            assert row.resource_id is None
+        finally:
+            db.close()
+
+    def test_all_context_fields_stored(self):
+        from alert_generator import generate_alert
+        if hasattr(generate_alert, "invoke"):
+            generate_alert.invoke({
+                "finding_type": "S3_PUBLIC_BUCKET_EXPOSURE",
+                "severity": "CRITICAL",
+                "details": "Bucket public",
+                "source_ip": "203.0.113.45",
+                "user_name": "dev-user",
+                "resource_id": "prod-customer-data",
+            })
+        else:
+            generate_alert("S3_PUBLIC_BUCKET_EXPOSURE", "CRITICAL",
+                           "Bucket public", "203.0.113.45", "dev-user",
+                           "prod-customer-data")
+        db = self._SessionLocal()
+        try:
+            row = db.query(self._Alert).first()
+            assert row.source_ip == "203.0.113.45"
+            assert row.user_name == "dev-user"
+            assert row.resource_id == "prod-customer-data"
+        finally:
+            db.close()
+
+    # ---- Multiple alerts: IDs increment, no collision ----------------------
+
+    def test_multiple_alerts_get_unique_ids(self):
+        from alert_generator import generate_alert
+        invoke = (generate_alert.invoke
+                  if hasattr(generate_alert, "invoke")
+                  else lambda d: generate_alert(**d))
+        for i in range(3):
+            invoke({
+                "finding_type": "BRUTE_FORCE", "severity": "HIGH",
+                "details": f"finding {i}",
+            })
+        db = self._SessionLocal()
+        try:
+            rows = db.query(self._Alert).order_by(self._Alert.id).all()
+            ids = [r.id for r in rows]
+            assert ids == [1, 2, 3]
+        finally:
+            db.close()
+
+    # ---- Helper functions (no DB needed) -----------------------------------
+
+    def test_normalize_finding_function(self):
+        from alert_generator import _normalize_finding
+        assert _normalize_finding("BRUTE_FORCE") == "BRUTE_FORCE"
+        assert _normalize_finding("BRUTE_FORCE_CONSOLE_LOGIN") == "BRUTE_FORCE"
+        assert _normalize_finding("PRIVILEGE_ESCALATION:CreateRole") == "PRIVILEGE_ESCALATION"
+        assert _normalize_finding("S3_MASS_OBJECT_ACCESS") == "DATA_EXFILTRATION"
+        assert _normalize_finding("") is None
+        assert _normalize_finding("UNKNOWN_TYPE") is None
+
+    def test_validate_severity_function(self):
+        from alert_generator import _validate_severity
+        assert _validate_severity("HIGH") == "HIGH"
+        assert _validate_severity("low") == "LOW"
+        assert _validate_severity("NUCLEAR") == "LOW"
+        assert _validate_severity("") == "LOW"
+        assert _validate_severity(None) == "LOW"
