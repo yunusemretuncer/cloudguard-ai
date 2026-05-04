@@ -71,3 +71,4 @@ class Alert(Base):
     source_ip: Mapped[str | None] = mapped_column(String(45), nullable=True, index=True)
     user_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     resource_id: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    
