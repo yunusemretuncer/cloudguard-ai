@@ -1,0 +1,232 @@
+{
+  "snapshot_time": "2026-04-21T12:00:00Z",
+  "account_id": "123456789012",
+  "region": "eu-west-1",
+  "resources": {
+    "s3_buckets": [
+      {
+        "name": "prod-customer-data",
+        "creation_date": "2024-08-15T10:30:00Z",
+        "public_access_blocked": false,
+        "policy_grants_public": true,
+        "encryption": null,
+        "versioning_enabled": false,
+        "logging_enabled": false,
+        "_scenario": "S3_critical_public_unencrypted"
+      },
+      {
+        "name": "app-config",
+        "creation_date": "2023-03-10T14:00:00Z",
+        "public_access_blocked": true,
+        "policy_grants_public": false,
+        "encryption": "AES256",
+        "versioning_enabled": true,
+        "logging_enabled": true,
+        "_scenario": "S3_low_weak_encryption"
+      },
+      {
+        "name": "deployment-logs",
+        "creation_date": "2025-01-05T09:00:00Z",
+        "public_access_blocked": true,
+        "policy_grants_public": false,
+        "encryption": "aws:kms",
+        "versioning_enabled": false,
+        "logging_enabled": true,
+        "_scenario": "S3_medium_no_versioning"
+      },
+      {
+        "name": "compliance-archive",
+        "creation_date": "2024-11-20T08:00:00Z",
+        "public_access_blocked": true,
+        "policy_grants_public": false,
+        "encryption": "aws:kms",
+        "versioning_enabled": true,
+        "logging_enabled": true,
+        "_scenario": "S3_normal"
+      }
+    ],
+    "security_groups": [
+      {
+        "id": "sg-0a1b2c3d4e5f60001",
+        "name": "sg-web-public",
+        "description": "Public-facing web server",
+        "ingress_rules": [
+          {
+            "protocol": "tcp",
+            "port_from": 80,
+            "port_to": 80,
+            "cidr": "0.0.0.0/0"
+          },
+          {
+            "protocol": "tcp",
+            "port_from": 443,
+            "port_to": 443,
+            "cidr": "0.0.0.0/0"
+          },
+          {
+            "protocol": "tcp",
+            "port_from": 22,
+            "port_to": 22,
+            "cidr": "0.0.0.0/0"
+          }
+        ],
+        "_scenario": "SG_critical_ssh_open"
+      },
+      {
+        "id": "sg-0a1b2c3d4e5f60002",
+        "name": "sg-rds-1",
+        "description": "RDS access",
+        "ingress_rules": [
+          {
+            "protocol": "tcp",
+            "port_from": 5432,
+            "port_to": 5432,
+            "cidr": "0.0.0.0/0"
+          }
+        ],
+        "_scenario": "SG_critical_db_open"
+      },
+      {
+        "id": "sg-0a1b2c3d4e5f60003",
+        "name": "sg-app-internal",
+        "description": "Internal app servers",
+        "ingress_rules": [
+          {
+            "protocol": "tcp",
+            "port_from": 8080,
+            "port_to": 8080,
+            "cidr": "10.0.0.0/16"
+          }
+        ],
+        "_scenario": "SG_normal"
+      },
+      {
+        "id": "sg-0a1b2c3d4e5f60004",
+        "name": "sg-bastion",
+        "description": "Bastion host (jumpbox)",
+        "ingress_rules": [
+          {
+            "protocol": "tcp",
+            "port_from": 22,
+            "port_to": 22,
+            "cidr": "198.18.0.0/16"
+          }
+        ],
+        "_scenario": "SG_normal_restricted_ssh"
+      }
+    ],
+    "iam_users": [
+      {
+        "user_name": "admin-user",
+        "create_date": "2023-01-15T10:00:00Z",
+        "mfa_enabled": false,
+        "attached_policies": [
+          "arn:aws:iam::aws:policy/AdministratorAccess"
+        ],
+        "inline_policies": [],
+        "access_keys": [
+          {
+            "access_key_id": "AKIAEXAMPLEADMIN001",
+            "status": "Active",
+            "create_date": "2024-06-01T10:00:00Z",
+            "last_used_date": "2026-04-20T09:30:00Z"
+          }
+        ],
+        "_scenario": "IAM_high_admin_no_mfa"
+      },
+      {
+        "user_name": "dev-user",
+        "create_date": "2023-08-01T12:00:00Z",
+        "mfa_enabled": false,
+        "attached_policies": [
+          "arn:aws:iam::aws:policy/AdministratorAccess"
+        ],
+        "inline_policies": [],
+        "access_keys": [
+          {
+            "access_key_id": "AKIAEXAMPLEDEV0001",
+            "status": "Active",
+            "create_date": "2025-03-15T12:00:00Z",
+            "last_used_date": "2026-04-20T08:00:00Z"
+          }
+        ],
+        "_scenario": "IAM_critical_compromise_target"
+      },
+      {
+        "user_name": "aws-deploy-bot",
+        "create_date": "2024-09-01T09:00:00Z",
+        "mfa_enabled": false,
+        "attached_policies": [
+          "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess",
+          "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+        ],
+        "inline_policies": [],
+        "access_keys": [
+          {
+            "access_key_id": "AKIAEXAMPLEDEPLOY01",
+            "status": "Active",
+            "create_date": "2025-10-03T09:00:00Z",
+            "last_used_date": "2026-04-21T12:00:00Z"
+          }
+        ],
+        "service_account": true,
+        "_scenario": "IAM_high_old_service_key"
+      },
+      {
+        "user_name": "senior-admin",
+        "create_date": "2022-05-10T08:00:00Z",
+        "mfa_enabled": true,
+        "attached_policies": [
+          "arn:aws:iam::aws:policy/AdministratorAccess"
+        ],
+        "inline_policies": [],
+        "access_keys": [
+          {
+            "access_key_id": "AKIAEXAMPLESENIOR01",
+            "status": "Active",
+            "create_date": "2026-03-20T08:00:00Z",
+            "last_used_date": "2026-04-21T11:00:00Z"
+          }
+        ],
+        "_scenario": "IAM_normal_well_managed_admin"
+      },
+      {
+        "user_name": "data-analyst",
+        "create_date": "2023-09-01T10:00:00Z",
+        "mfa_enabled": true,
+        "attached_policies": [
+          "arn:aws:iam::aws:policy/ReadOnlyAccess"
+        ],
+        "inline_policies": [],
+        "access_keys": [],
+        "_scenario": "IAM_normal_readonly"
+      }
+    ],
+    "rds_instances": [
+      {
+        "id": "prod-customer-db",
+        "engine": "postgres",
+        "engine_version": "14.10",
+        "publicly_accessible": true,
+        "storage_encrypted": false,
+        "backup_retention_days": 1,
+        "vpc_security_group_ids": [
+          "sg-0a1b2c3d4e5f60002"
+        ],
+        "_scenario": "RDS_critical_public_unencrypted"
+      },
+      {
+        "id": "analytics-db",
+        "engine": "postgres",
+        "engine_version": "15.6",
+        "publicly_accessible": false,
+        "storage_encrypted": true,
+        "backup_retention_days": 14,
+        "vpc_security_group_ids": [
+          "sg-0a1b2c3d4e5f60003"
+        ],
+        "_scenario": "RDS_normal"
+      }
+    ]
+  }
+}

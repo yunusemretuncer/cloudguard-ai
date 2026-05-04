@@ -429,3 +429,198 @@ class TestMITREMapping:
         auth = call(analyze_auth_logs)
         assert "MITRE ATT&CK:" in auth
         assert "T1078" in auth  # valid accounts (compromise)
+
+
+# ============================================================================
+# Section 9: config_auditor tests
+# ============================================================================
+
+import config_auditor  # noqa: E402
+from config_auditor import audit_cloud_config  # noqa: E402
+
+
+class TestConfigAuditor:
+
+    @pytest.fixture(scope="class")
+    def report_all(self):
+        return call(audit_cloud_config, "all") if False else \
+               (audit_cloud_config.invoke({"check_type": "all"})
+                if hasattr(audit_cloud_config, "invoke")
+                else audit_cloud_config("all"))
+
+    # ---- Smoke -------------------------------------------------------------
+
+    def test_returns_markdown(self, report_all):
+        assert isinstance(report_all, str)
+        assert report_all.startswith("## AWS Configuration Audit")
+
+    def test_total_finding_count(self, report_all):
+        # 6 S3 + 2 SG + 5 IAM + 3 RDS = 16
+        m = re.search(r"\*\*Total findings:\*\*\s*(\d+)", report_all)
+        assert m and int(m.group(1)) == 16
+
+    # ---- S3 ----------------------------------------------------------------
+
+    def test_s3_public_bucket_critical(self, report_all):
+        assert "prod-customer-data" in report_all
+        assert "publicly accessible" in report_all
+        # Cross-correlation hint must appear
+        assert "CloudTrail S3 chain" in report_all
+
+    def test_s3_no_encryption_high(self, report_all):
+        assert "no encryption at rest" in report_all
+
+    def test_s3_weak_encryption_low(self, report_all):
+        assert "SSE-S3 instead of KMS" in report_all
+        assert "app-config" in report_all
+
+    def test_s3_versioning_disabled(self, report_all):
+        # Both prod-customer-data and deployment-logs should have this finding
+        count = report_all.count("versioning is disabled")
+        assert count == 2
+
+    def test_s3_compliance_archive_clean(self, report_all):
+        # The properly-configured bucket should NEVER appear as a problem
+        # (it CAN appear in a "no findings" section, but shouldn't be in any
+        # CRITICAL/HIGH/MEDIUM/LOW finding header)
+        for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
+            assert f"{sev} — `compliance-archive`" not in report_all
+
+    # ---- Security Groups ---------------------------------------------------
+
+    def test_sg_ssh_open(self, report_all):
+        assert "sg-web-public" in report_all
+        assert "SSH (port 22) open" in report_all
+        assert "Auth logs" in report_all  # cross-correlation
+
+    def test_sg_db_port_open(self, report_all):
+        assert "sg-rds-1" in report_all
+        assert "Database port 5432" in report_all
+
+    def test_sg_internal_clean(self, report_all):
+        for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
+            assert f"{sev} — `sg-app-internal`" not in report_all
+
+    def test_sg_bastion_clean(self, report_all):
+        # SSH restricted to office CIDR is a best practice — must not flag
+        for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
+            assert f"{sev} — `sg-bastion`" not in report_all
+
+    # ---- IAM ---------------------------------------------------------------
+
+    def test_iam_admin_no_mfa(self, report_all):
+        # admin-user and dev-user are both admins without MFA
+        mfa_findings = report_all.count("does not have MFA enabled")
+        assert mfa_findings == 2
+
+    def test_iam_old_key_rotation(self, report_all):
+        # admin-user (689 days), dev-user (402 days) → HIGH
+        # aws-deploy-bot (200 days) → MEDIUM
+        assert "689 days" in report_all
+        assert "402 days" in report_all
+        assert "200 days old" in report_all
+
+    def test_iam_correlation_hints(self, report_all):
+        assert "CloudTrail S2 — attacker AttachUserPolicy" in report_all
+        assert "CloudTrail S4 — this user's access key was leaked" in report_all
+
+    def test_iam_well_managed_admin_clean(self, report_all):
+        # senior-admin has MFA + recently-rotated key — must NOT trigger
+        for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
+            assert f"{sev} — `senior-admin`" not in report_all
+
+    def test_iam_readonly_clean(self, report_all):
+        for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
+            assert f"{sev} — `data-analyst`" not in report_all
+
+    def test_iam_service_account_no_mfa_finding(self, report_all):
+        # aws-deploy-bot is a service account; the MFA check should NOT
+        # fire for it (service accounts don't use console)
+        # The user should ONLY have the key-rotation finding, not MFA.
+        # Since MFA-finding text is shared, we can't grep it directly;
+        # instead, we confirm aws-deploy-bot doesn't appear in an MFA section.
+        # Build a per-user view:
+        for line in report_all.split("\n"):
+            if "aws-deploy-bot" in line and "MFA" in line:
+                pytest.fail(f"Service account flagged for MFA: {line}")
+
+    # ---- RDS ---------------------------------------------------------------
+
+    def test_rds_public_critical(self, report_all):
+        assert "prod-customer-db" in report_all
+        assert "publicly accessible" in report_all
+
+    def test_rds_unencrypted(self, report_all):
+        assert "DB storage is not encrypted" in report_all
+
+    def test_rds_short_backup(self, report_all):
+        assert "Backup retention is only 1 day" in report_all
+
+    def test_rds_clean_instance(self, report_all):
+        for sev in ("CRITICAL", "HIGH", "MEDIUM", "LOW"):
+            assert f"{sev} — `analytics-db`" not in report_all
+
+    # ---- Scope filtering ---------------------------------------------------
+
+    def test_scope_s3_only(self):
+        result = (audit_cloud_config.invoke({"check_type": "s3"})
+                  if hasattr(audit_cloud_config, "invoke")
+                  else audit_cloud_config("s3"))
+        assert "S3 Buckets" in result
+        assert "Security Groups" not in result
+        assert "IAM Users" not in result
+        assert "RDS Instances" not in result
+
+    def test_scope_iam_only(self):
+        result = (audit_cloud_config.invoke({"check_type": "iam"})
+                  if hasattr(audit_cloud_config, "invoke")
+                  else audit_cloud_config("iam"))
+        assert "IAM Users" in result
+        assert "S3 Buckets" not in result
+
+    def test_scope_invalid(self):
+        result = (audit_cloud_config.invoke({"check_type": "lambda"})
+                  if hasattr(audit_cloud_config, "invoke")
+                  else audit_cloud_config("lambda"))
+        assert "Error" in result and "invalid" in result.lower()
+
+    # ---- Edge cases --------------------------------------------------------
+
+    def test_missing_file_returns_error(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(config_auditor, "DATA_DIR", tmp_path)
+        result = (audit_cloud_config.invoke({"check_type": "all"})
+                  if hasattr(audit_cloud_config, "invoke")
+                  else audit_cloud_config("all"))
+        assert "Error" in result or "❌" in result
+
+    def test_empty_snapshot_handled(self, tmp_path, monkeypatch):
+        empty = {"snapshot_time": "2026-04-21T12:00:00Z",
+                 "account_id": "111", "region": "eu-west-1",
+                 "resources": {"s3_buckets": [], "security_groups": [],
+                               "iam_users": [], "rds_instances": []}}
+        f = tmp_path / "aws_config_sample.json"
+        f.write_text(json.dumps(empty))
+        monkeypatch.setattr(config_auditor, "DATA_DIR", tmp_path)
+        result = (audit_cloud_config.invoke({"check_type": "all"})
+                  if hasattr(audit_cloud_config, "invoke")
+                  else audit_cloud_config("all"))
+        assert "No misconfigurations detected" in result
+
+    # ---- Cross-correlation with other tools --------------------------------
+
+    def test_cross_correlation_s3_with_cloudtrail(self, report_all):
+        """The bucket flagged here as public is the same bucket the
+        cloudtrail S3 mass-access finding cites."""
+        ct = call(analyze_cloudtrail_logs)
+        # Both should mention the same bucket
+        assert "prod-customer-data" in report_all
+        assert "prod-customer-data" in ct
+
+    def test_cross_correlation_sg_with_auth(self, report_all):
+        """The SSH-open SG flagged here is the network-layer enabler of the
+        auth_logs SSH brute-force compromise."""
+        auth = call(analyze_auth_logs)
+        assert "sg-web-public" in report_all
+        # auth_logs report identifies web-server-01 as the compromised host;
+        # config_auditor identifies the SG that backs it.
+        assert "web-server-01" in auth
