@@ -624,3 +624,183 @@ class TestConfigAuditor:
         # auth_logs report identifies web-server-01 as the compromised host;
         # config_auditor identifies the SG that backs it.
         assert "web-server-01" in auth
+
+
+# ============================================================================
+# Section 10: remediation tests
+# ============================================================================
+
+import remediation  # noqa: E402,F401  (imported for monkeypatching in tests if needed)
+from remediation import get_remediation, PLAYBOOKS, _normalize, _parse_context  # noqa: E402
+
+
+class TestRemediation:
+
+    # ---- Helper functions --------------------------------------------------
+
+    def test_normalize_known_high_level(self):
+        assert _normalize("BRUTE_FORCE") == "BRUTE_FORCE"
+        assert _normalize("S3_PUBLIC_EXPOSURE") == "S3_PUBLIC_EXPOSURE"
+
+    def test_normalize_specific_to_category(self):
+        assert _normalize("BRUTE_FORCE_CONSOLE_LOGIN") == "BRUTE_FORCE"
+        assert _normalize("SSH_BRUTE_FORCE_NETWORK") == "BRUTE_FORCE"
+        assert _normalize("S3_PUBLIC_BUCKET_EXPOSURE") == "S3_PUBLIC_EXPOSURE"
+        assert _normalize("S3_MASS_OBJECT_ACCESS") == "DATA_EXFILTRATION"
+        assert _normalize("SSH_COMPROMISE_AFTER_BRUTE_FORCE") == "SSH_COMPROMISE"
+
+    def test_normalize_strips_colon_suffix(self):
+        # log_analyzer emits "PRIVILEGE_ESCALATION:CreateRole" etc.
+        assert _normalize("PRIVILEGE_ESCALATION:CreateRole") == "PRIVILEGE_ESCALATION"
+        assert _normalize("PRIVILEGE_ESCALATION:AttachUserPolicy") == "PRIVILEGE_ESCALATION"
+
+    def test_normalize_case_insensitive(self):
+        assert _normalize("brute_force") == "BRUTE_FORCE"
+        assert _normalize("Brute_Force") == "BRUTE_FORCE"
+
+    def test_normalize_empty_or_unknown(self):
+        assert _normalize("") == ""
+        assert _normalize("NONEXISTENT") == ""
+
+    # ---- Context parsing --------------------------------------------------
+
+    def test_parse_context_simple(self):
+        ctx = _parse_context("ip=1.2.3.4")
+        assert ctx == {"ip": "1.2.3.4"}
+
+    def test_parse_context_multiple(self):
+        ctx = _parse_context("ip=1.2.3.4, user=alice, bucket=mydata")
+        assert ctx == {"ip": "1.2.3.4", "user": "alice", "bucket": "mydata"}
+
+    def test_parse_context_whitespace_separated(self):
+        ctx = _parse_context("ip=1.2.3.4 user=alice")
+        assert ctx == {"ip": "1.2.3.4", "user": "alice"}
+
+    def test_parse_context_drops_unknown_keys(self):
+        ctx = _parse_context("ip=1.2.3.4, xyz=foo")
+        assert "ip" in ctx
+        assert "xyz" not in ctx  # 'xyz' is not in PLACEHOLDER_KEYS
+
+    def test_parse_context_empty(self):
+        assert _parse_context("") == {}
+        assert _parse_context(None) == {}
+
+    # ---- Tool invocation: each playbook ------------------------------------
+
+    @pytest.mark.parametrize("finding_type,expected_mitre", [
+        ("BRUTE_FORCE",                    "T1110"),
+        ("PRIVILEGE_ESCALATION",           "T1098"),
+        ("SSH_COMPROMISE",                 "T1078"),
+        ("SUDO_ESCALATION",                "T1548"),
+        ("UNAUTHORIZED_ACCESS",            "T1078"),
+        ("S3_PUBLIC_EXPOSURE",             "T1530"),
+        ("DATA_EXFILTRATION",              "T1048"),
+        ("NETWORK_RECON",                  "T1046"),
+        ("SECURITY_GROUP_MISCONFIG",       "T1133"),
+        ("IAM_HYGIENE",                    "T1078"),
+        ("RDS_EXPOSURE",                   "T1530"),
+    ])
+    def test_each_playbook_returns_full_structure(self, finding_type, expected_mitre):
+        r = (get_remediation.invoke({"finding_type": finding_type})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation(finding_type))
+        assert "Remediation Playbook" in r
+        assert expected_mitre in r
+        assert "Immediate" in r
+        assert "Investigation" in r
+        assert "Long-term" in r
+        assert "NIST SP 800-61" in r
+
+    # ---- Specific finding types from other tools work ---------------------
+
+    def test_specific_finding_type_routes_correctly(self):
+        # log_analyzer emits this exact string; remediation must handle it
+        r = (get_remediation.invoke({"finding_type": "PRIVILEGE_ESCALATION:CreateAccessKey"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("PRIVILEGE_ESCALATION:CreateAccessKey"))
+        assert "T1098" in r
+
+    def test_s3_mass_access_routes_to_exfiltration(self):
+        r = (get_remediation.invoke({"finding_type": "S3_MASS_OBJECT_ACCESS"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("S3_MASS_OBJECT_ACCESS"))
+        assert "Data Exfiltration" in r
+        assert "T1048" in r
+
+    # ---- Context substitution ---------------------------------------------
+
+    def test_context_substitution_ip(self):
+        r = (get_remediation.invoke({"finding_type": "BRUTE_FORCE",
+                                      "context": "ip=203.0.113.45"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("BRUTE_FORCE", "ip=203.0.113.45"))
+        assert "203.0.113.45" in r
+        assert "<IP>" not in r  # placeholder should be replaced
+
+    def test_context_substitution_multiple(self):
+        r = (get_remediation.invoke({
+                "finding_type": "PRIVILEGE_ESCALATION",
+                "context": "user=dev-user, key_id=AKIATEST123"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("PRIVILEGE_ESCALATION",
+                                  "user=dev-user, key_id=AKIATEST123"))
+        assert "dev-user" in r
+        assert "AKIATEST123" in r
+        assert "<USER>" not in r
+        assert "<KEY_ID>" not in r
+
+    def test_context_substitution_bucket(self):
+        r = (get_remediation.invoke({"finding_type": "S3_PUBLIC_EXPOSURE",
+                                      "context": "bucket=prod-customer-data"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("S3_PUBLIC_EXPOSURE", "bucket=prod-customer-data"))
+        assert "prod-customer-data" in r
+        assert "<BUCKET>" not in r
+
+    def test_no_context_keeps_placeholders(self):
+        # Without context, placeholders should remain visible (still useful
+        # as a copy-paste template the user fills in)
+        r = (get_remediation.invoke({"finding_type": "SSH_COMPROMISE"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("SSH_COMPROMISE"))
+        assert "<HOST>" in r or "<USER>" in r
+
+    # ---- Error handling ---------------------------------------------------
+
+    def test_unknown_finding_type_helpful_error(self):
+        r = (get_remediation.invoke({"finding_type": "TOTALLY_MADE_UP"})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation("TOTALLY_MADE_UP"))
+        assert "❌" in r
+        assert "TOTALLY_MADE_UP" in r
+        assert "Available playbooks" in r
+
+    def test_empty_finding_type_returns_error(self):
+        r = (get_remediation.invoke({"finding_type": ""})
+             if hasattr(get_remediation, "invoke")
+             else get_remediation(""))
+        assert "❌" in r
+
+    # ---- Structural checks ------------------------------------------------
+
+    def test_all_playbooks_have_required_fields(self):
+        for key, pb in PLAYBOOKS.items():
+            assert "title" in pb,         f"{key} missing title"
+            assert "mitre_id" in pb,      f"{key} missing mitre_id"
+            assert "mitre_tactic" in pb,  f"{key} missing mitre_tactic"
+            assert "mitre_technique" in pb, f"{key} missing mitre_technique"
+            assert "immediate" in pb and len(pb["immediate"]) >= 1
+            assert "investigation" in pb and len(pb["investigation"]) >= 1
+            assert "long_term" in pb and len(pb["long_term"]) >= 1
+
+    def test_aws_cli_commands_present(self):
+        # At least the most common playbooks should include CLI commands
+        r_brute = (get_remediation.invoke({"finding_type": "BRUTE_FORCE"})
+                   if hasattr(get_remediation, "invoke")
+                   else get_remediation("BRUTE_FORCE"))
+        assert "aws " in r_brute  # AWS CLI command(s)
+
+        r_s3 = (get_remediation.invoke({"finding_type": "S3_PUBLIC_EXPOSURE"})
+                if hasattr(get_remediation, "invoke")
+                else get_remediation("S3_PUBLIC_EXPOSURE"))
+        assert "aws s3api" in r_s3
