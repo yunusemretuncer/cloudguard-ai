@@ -188,16 +188,18 @@ def _validate_severity(severity: str) -> str:
     return "LOW"
 
 
-def _format_alert_response(alert_id: int, alert_type: str, severity: str,
-                            details: str, mitre: Optional[dict],
+def _format_alert_response(alert_id: int, finding_type: str, severity: str,
+                            title: str, detail: str, mitre: Optional[dict],
                             source_ip: Optional[str], user_name: Optional[str],
-                            resource_id: Optional[str]) -> str:
+                            resource_id: Optional[str],
+                            thread_id: Optional[str]) -> str:
     """Render a Markdown summary the agent can include in its reply."""
     emoji = SEVERITY_EMOJI.get(severity, "•")
     out = f"## Alert Recorded {emoji}\n\n"
     out += f"- **Alert ID:** #{alert_id}\n"
-    out += f"- **Type:** {alert_type}\n"
+    out += f"- **Type:** {finding_type}\n"
     out += f"- **Severity:** {severity}\n"
+    out += f"- **Title:** {title}\n"
     if mitre:
         out += (f"- **MITRE ATT&CK:** {mitre['technique_id']} — "
                 f"{mitre['technique_name']} ({mitre['tactic']})\n")
@@ -207,7 +209,9 @@ def _format_alert_response(alert_id: int, alert_type: str, severity: str,
         out += f"- **User:** {user_name}\n"
     if resource_id:
         out += f"- **Resource:** {resource_id}\n"
-    out += f"\n**Detail:** {details}\n"
+    if thread_id:
+        out += f"- **Thread:** {thread_id}\n"
+    out += f"\n**Detail:** {detail}\n"
     out += "\n*Saved to alerts table — visible in the dashboard alert panel.*\n"
     return out
 
@@ -216,9 +220,10 @@ def _format_alert_response(alert_id: int, alert_type: str, severity: str,
 # Database access
 # ============================================================================
 
-def _persist_alert(alert_type: str, severity: str, details: str,
+def _persist_alert(finding_type: str, severity: str, title: str, detail: str,
                    mitre: Optional[dict], source_ip: Optional[str],
-                   user_name: Optional[str], resource_id: Optional[str]) -> int:
+                   user_name: Optional[str], resource_id: Optional[str],
+                   thread_id: Optional[str]) -> int:
     """Insert an Alert row, return the new alert's ID.
 
     Imports the model + session inside the function to keep this module
@@ -229,15 +234,17 @@ def _persist_alert(alert_type: str, severity: str, details: str,
     from app.db.models import Alert
 
     alert = Alert(
-        alert_type=alert_type,
+        finding_type=finding_type,
         severity=severity,
-        details=details,
+        title=title,
+        detail=detail,
         mitre_id=mitre["technique_id"] if mitre else None,
         mitre_tactic=mitre["tactic"] if mitre else None,
         mitre_technique=mitre["technique_name"] if mitre else None,
         source_ip=source_ip,
         user_name=user_name,
         resource_id=resource_id,
+        thread_id=thread_id,
     )
     db = SessionLocal()
     try:
@@ -257,10 +264,12 @@ def _persist_alert(alert_type: str, severity: str, details: str,
 def generate_alert(
     finding_type: str,
     severity: str,
-    details: str,
+    detail: str,
+    title: str = "",
     source_ip: str = "",
     user_name: str = "",
     resource_id: str = "",
+    thread_id: str = "",
 ) -> str:
     """Records a security finding as a structured alert in the database.
 
@@ -270,9 +279,9 @@ def generate_alert(
 
     The MITRE ATT&CK metadata is looked up automatically from the
     finding_type (no need for the caller to provide it). Optional
-    context (source_ip, user_name, resource_id) lets the alert link
-    back to the entity it concerns — fill these in when the finding
-    naturally identifies one.
+    context (source_ip, user_name, resource_id, thread_id) lets the
+    alert link back to the entity it concerns — fill these in when
+    the finding naturally identifies one.
 
     Use this tool when:
       - Another tool reported a finding that warrants recording
@@ -289,35 +298,45 @@ def generate_alert(
             applied via the canonical category.
         severity: One of 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'. Other
             values are coerced to 'LOW'.
-        details: Plain-language description of the finding for the
-            dashboard (e.g., "6 failed ConsoleLogin attempts from
-            203.0.113.45 targeting admin-user, dev-user, backup-user").
+        title: Short summary (≤256 chars) shown in the alert list,
+            e.g., "Brute force from 203.0.113.45 (6 failed logins)".
+        detail: Longer description shown in the alert detail panel
+            (e.g., the full evidence: time window, targeted users, etc.)
         source_ip: Optional. The IP address involved, if applicable.
         user_name: Optional. The IAM user / Linux user involved.
         resource_id: Optional. The S3 bucket / SG / RDS / etc.
             identifier the alert concerns.
+        thread_id: Optional. The chat thread that triggered this
+            alert, for linking alerts back to their conversation.
     """
     # Normalize and validate inputs
     canonical = _normalize_finding(finding_type)
     severity = _validate_severity(severity)
     mitre = MITRE_MAPPING.get(canonical) if canonical else None
 
+    # If title is empty (caller forgot), derive a short one from detail
+    if not title:
+        title = (detail[:200] + "…") if len(detail) > 200 else detail
+
     # Empty-string optional params come through as "" from LangChain;
     # convert them to None so they're stored as NULL in the DB.
     source_ip = source_ip or None
     user_name = user_name or None
     resource_id = resource_id or None
+    thread_id = thread_id or None
 
     # Persist
     try:
         alert_id = _persist_alert(
-            alert_type=finding_type,    # store original (un-normalized) for granularity
+            finding_type=finding_type,    # store original (un-normalized) for granularity
             severity=severity,
-            details=details,
+            title=title,
+            detail=detail,
             mitre=mitre,
             source_ip=source_ip,
             user_name=user_name,
             resource_id=resource_id,
+            thread_id=thread_id,
         )
     except Exception as e:
         # Don't crash the agent loop — return an error message it can relay
@@ -325,13 +344,15 @@ def generate_alert(
 
     return _format_alert_response(
         alert_id=alert_id,
-        alert_type=finding_type,
+        finding_type=finding_type,
         severity=severity,
-        details=details,
+        title=title,
+        detail=detail,
         mitre=mitre,
         source_ip=source_ip,
         user_name=user_name,
         resource_id=resource_id,
+        thread_id=thread_id,
     )
 
 
@@ -344,9 +365,9 @@ if __name__ == "__main__":
     # directory after the FastAPI app has started once (so init_db()
     # has created the table).
     import sys
-    if len(sys.argv) < 4:
-        print("Usage: python alert_generator.py <finding_type> <severity> <details> "
-              "[source_ip] [user_name] [resource_id]")
+    if len(sys.argv) < 5:
+        print("Usage: python alert_generator.py <finding_type> <severity> "
+              "<title> <detail> [source_ip] [user_name] [resource_id] [thread_id]")
         sys.exit(1)
     args = sys.argv[1:]
     invoke = (generate_alert.invoke
@@ -355,9 +376,11 @@ if __name__ == "__main__":
     payload = {
         "finding_type": args[0],
         "severity": args[1],
-        "details": args[2],
-        "source_ip": args[3] if len(args) > 3 else "",
-        "user_name": args[4] if len(args) > 4 else "",
-        "resource_id": args[5] if len(args) > 5 else "",
+        "title": args[2],
+        "detail": args[3],
+        "source_ip":   args[4] if len(args) > 4 else "",
+        "user_name":   args[5] if len(args) > 5 else "",
+        "resource_id": args[6] if len(args) > 6 else "",
+        "thread_id":   args[7] if len(args) > 7 else "",
     }
     print(invoke(payload))
